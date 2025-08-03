@@ -1,4 +1,4 @@
-# ProgettoFatturazione-CooperativaValdocco
+# WebappFatturazioneSmart
 
 (indicare finalità, contenuti, attività da svolgere e loro eventuale articolazione, nonché i risultati
 formativi attesi, eventuali attività fuori sede).
