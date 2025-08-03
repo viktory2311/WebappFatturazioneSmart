@@ -1,0 +1,38 @@
+@import url('https://fonts.cdnfonts.com/css/poppins');
+.logo {
+  font-size: 1.8rem;
+}
+/*CSS per NavBar e bottoni iniziali*/
+    .p-0 {
+        font-family: 'poppins', sans-serif;
+        background-color: #eafbe7; /* verde pastello */
+    }
+
+    .app-header {
+        background: linear-gradient(90deg, #00c853, #b2ff59); /* smeraldo a lime chiaro */
+    }
+
+    .nav-btn {
+        background-color: #00c853 !important; /* smeraldo */
+        color: #fff !important;
+    }
+
+    .nav-btn:hover {
+        background-color: #b2ff59 !important; /* lime chiaro */
+        color: #00c853 !important;
+    }
+/*Fine*/
+
+
+.page {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
