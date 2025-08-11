@@ -24,6 +24,15 @@
 /*Fine*/
 
 
+#resetbtn{
+  background-color: #c40000 !important; /* smeraldo */
+        color: #fff !important;
+}
+#resetbtn:hover{
+  background-color: #ffe5e5 !important; /* smeraldo */
+        color: #c40000 !important;
+}
+
 .page {
   display: none;
   animation: fadeIn 0.3s ease-in-out;
