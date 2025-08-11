@@ -6,48 +6,55 @@ function showPage(pageId) {
 }
 
 window.onload = () => {
-  const savedData = localStorage.getItem("fatturazioneData");
-  if (savedData) {
-    originalData = JSON.parse(savedData);
-    populateBeneficiarioFilter();
-    applyFilters();
-  }
+  // Recupera dati salvati
+const savedData = localStorage.getItem("fatturazioneData");
+if (savedData) {
+  originalData = JSON.parse(savedData);
+  populateBeneficiarioFilter();
+  applyFilters();
+}
 
-    const dropArea = document.getElementById('drop-area');
-  const fileInput = document.getElementById('fileInput');
-  const dropMessage = document.getElementById('drop-message');
+// Elementi DOM
+const dropArea = document.getElementById('drop-area');
+const fileInput = document.getElementById('fileInput');
+const dropMessage = document.getElementById('drop-message');
 
-  // Evidenzia area quando si trascina sopra
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropArea.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropArea.classList.add('bg-primary', 'text-white');
-      dropMessage.textContent = "Rilascia il file qui!";
-    });
-  });
-
-  // Rimuovi evidenziazione quando si esce
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropArea.classList.remove('bg-primary', 'text-white');
-      dropMessage.innerHTML = 'Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>';
-    });
-  });
-
-  // Gestisci il drop
-  dropArea.addEventListener('drop', (e) => {
+// Evidenzia area quando si trascina sopra
+['dragenter', 'dragover'].forEach(eventName => {
+  dropArea.addEventListener(eventName, (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-    }
+    dropArea.classList.add('bg-primary', 'text-white');
+    dropMessage.textContent = "Rilascia il file qui!";
   });
+});
 
-  // Permetti click per aprire il file picker
-  dropArea.addEventListener('click', () => fileInput.click());
+// Rimuovi evidenziazione quando si esce
+['dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropArea.classList.remove('bg-primary', 'text-white');
+    dropMessage.innerHTML = 'Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>';
+  });
+});
+
+// Gestisci il drop
+dropArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    loadFile(); // Avvia subito la lettura del file
+  }
+});
+
+// Permetti click per aprire il file picker
+dropArea.addEventListener('click', () => fileInput.click());
+
+// Avvia caricamento quando viene selezionato un file
+fileInput.addEventListener('change', loadFile);
+    
 };
 
 function saveData() {
@@ -75,7 +82,7 @@ function loadFile() {
     // LA FUNZIONE Papa.parse è utilizzata per leggere il file CSV
   // e popolare la tabella con i dati.
   // Assicurati di avere la libreria PapaParse inclusa nel tuo progetto
-  // ed è asincroana, quindi non blocca l'interfaccia utente durante il caricamento.
+  // ed è asincrona, quindi non blocca l'interfaccia utente durante il caricamento.
 
   if (file.name.toLowerCase().endsWith(".csv")) {
     reader.onload = function(e) {
