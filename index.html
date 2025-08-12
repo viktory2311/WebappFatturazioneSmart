@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Fatturazione Smart</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="p-0">
@@ -47,8 +48,8 @@
             <input type="text" id="searchInput" class="form-control" placeholder="Cerca..." style="width:180px" oninput="applyFilters()">
           </div>
           <div class="d-flex align-items-center gap-2">
-            <label class="mb-0">Filtra per Beneficiario:</label>
-            <select id="beneficiarioFilter" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
+            <label class="mb-0">Filtra per Utente:</label>
+            <select id="UtenteFilter" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
               <option value="">Tutti</option>
             </select>
           </div>
@@ -67,13 +68,19 @@
         </div>
       </div>
 
-      <table class="table table-bordered table-hover">
+      <strong><p id="totaleUtenti"></p></strong>
+
+      <!-- CREAZIONE TABELLA -->
+      <table class="table table-bordered table-hover table-rounded ">
         <thead class="table-dark">
           <tr>
-            <th>Beneficiario</th>
-            <th>Ore</th>
-            <th>Tariffa</th>
-            <th>Importo</th>
+            <th class="text-center">UTENTE</th>
+             <th class="text-center">DATA DI NASCITA</th>
+             <th class="text-center">INDIRIZZO</th>
+             <th class="text-center">CODICE FISCALE</th>
+             <th class="text-center">DA DEFINIRE</th>
+             <th class="text-center">DA DEFINIRE</th>
+             <th class="text-center">TOTALE ORE MESE</th>
           </tr>
         </thead>
         <tbody id="dataTable">
@@ -91,10 +98,19 @@
     </div>
 
   </main>
+<!-- Pulsante globale "scroll to top" della pagina -->
+<button id="scrollTopBtn" class="btn btn-primary shadow-lg" aria-label="Torna su" title="Torna su">
+  <i class="bi bi-arrow-up-short fs-4"></i>
+</button>
 
+<!-- Pulsante contestuale per il contenitore tabella -->
+<button id="tableScrollTopBtn" class="btn btn-secondary shadow-sm" aria-label="Torna all'inizio della tabella" title="Torna in cima alla tabella">
+  <i class="bi bi-arrow-up"></i>
+</button>
   <!-- PapaParse -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="script.js"></script>
+  <script src="scriptBtnScrollUp.js"></script>
 </body>
 </html>

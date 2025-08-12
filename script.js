@@ -10,7 +10,7 @@ window.onload = () => {
 const savedData = localStorage.getItem("fatturazioneData");
 if (savedData) {
   originalData = JSON.parse(savedData);
-  populateBeneficiarioFilter();
+  populateUtenteFilter();
   applyFilters();
 }
 
@@ -60,11 +60,12 @@ fileInput.addEventListener('change', loadFile);
 function saveData() {
   localStorage.setItem("fatturazioneData", JSON.stringify(originalData));
 }
+
 function resetData() {
   if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
     localStorage.removeItem("fatturazioneData");
     originalData = [];
-    populateBeneficiarioFilter();
+    populateUtenteFilter();
     applyFilters();
   }
 }
@@ -92,7 +93,7 @@ function loadFile() {
         complete: function(results) {
           originalData = results.data;
           saveData();
-          populateBeneficiarioFilter();
+          populateUtenteFilter();
           applyFilters();
           showPage('dati');
         }
@@ -106,10 +107,10 @@ function loadFile() {
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-      originalData = jsonData; // già con header → oggetti tipo { Beneficiario:..., Ore:..., Tariffa:... }
+      const jsonData = XLSX.utils.sheet_to_json(sheet, {range: 1}); // Salta la prima riga
+      originalData = jsonData; // già con header → oggetti tipo { Descrizione:..., Bday:..., Indirizzo:... }
       saveData();
-      populateBeneficiarioFilter();
+      populateUtenteFilter();
       applyFilters();
       showPage('dati');
     };
@@ -121,51 +122,94 @@ function loadFile() {
 }
 
  
-
+function excelDateToJSDate(serial) {
+  const utc_days = Math.floor(serial - 25569);
+  const utc_value = utc_days * 86400; 
+  const date_info = new Date(utc_value * 1000);
+  return date_info.toLocaleDateString("it-IT");
+}
 
 
 function populateTable(data) {
   const tableBody = document.getElementById("dataTable");
   tableBody.innerHTML = "";
+  let totaleUtenti = 0;
 
   data.forEach(row => {
-    const beneficiario = row.Beneficiario || "";
+    // INSERIMENTO UTENTE
+    const descrizione = row.Descrizione || "";
+    if (!descrizione) return; // salta la riga vuota
+
+    // INSERIMENTO DATA DI NASCITA
+    const dataNascita = row.dataNascita || row["Data di Nascita Cliente"] || "";
+      let dataFormattata = "";
+    // CONTROLLO se la data è un numero seriale Excel o una stringa data valida
+    // Se è un numero seriale Excel, convertilo in data JS
+    if (dataNascita) {
+      if (!isNaN(dataNascita) && Number(dataNascita) > 10000) {
+        // È un numero seriale Excel
+        dataFormattata = excelDateToJSDate(Number(dataNascita));
+      } else if (!isNaN(Date.parse(dataNascita))) {
+        // È una stringa data valida
+        dataFormattata = new Date(dataNascita).toLocaleDateString("it-IT");
+      }
+    }
+    // INSERIMENTO INIDIRIZZO
+    const indirizzo = row.Indirizzo || row["Indirizzo Cliente"] || ""; 
+    // INSERIMENTO CODICE FISCALE
+    const codiceFiscale = row.CodiceFiscale || row["Codice Fiscale Cliente"] || "";
+    // INSERIMENTO DA COLLONNA C-ADI FINO MINORI DISABILI GRAVI
+    // INSERIMENTO DA COLONNA NORD FINO VIA TESSO
+    // INSERIMENTO TOTALE ORE DEL MESE
+    const totaleOre = row.totaleOre || row["Totale"] || "";
+
     const ore = parseFloat(row.Ore) || 0;
     const tariffa = parseFloat(row.Tariffa) || 0;
     const importo = ore * tariffa;
+    totaleUtenti++;
+    
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${beneficiario}</td>
-      <td>${ore}</td>
-      <td>${tariffa}</td>
-      <td>${importo.toFixed(2)}</td>
+      <td>${descrizione}</td>
+      <td>${dataFormattata}</td>
+      <td>${indirizzo}</td>
+      <td>${codiceFiscale}</td>
+      <td>${totaleOre}</td>
+      <td>${codiceFiscale}</td>
+      <td>${totaleOre.toFixed(2)}</td>
     `;
     tableBody.appendChild(tr);
+    
   });
+
+  const totaleUtentiElement = document.getElementById("totaleUtenti");
+  if(totaleUtentiElement){
+    totaleUtentiElement.textContent = 'Totale Utenti: ' + totaleUtenti
+  }
 }
 
-// Filtro dati per beneficiario
+// Filtro dati per Utente
 
 function applyFilters() {
-  const beneficiarioValue = document.getElementById("beneficiarioFilter").value;
+  const utenteValue = document.getElementById("UtenteFilter").value;
   const searchValue = document.getElementById("searchInput").value.toLowerCase();
 
   const filtered = originalData.filter(row => {
-    const matchesBeneficiario = !beneficiarioValue || row.Beneficiario === beneficiarioValue;
-    const matchesSearch = (row.Beneficiario || "").toLowerCase().includes(searchValue);
-    return matchesBeneficiario && matchesSearch;
+    const matchesUtente = !utenteValue || row.Descrizione === utenteValue;
+    const matchesSearch = (row.Descrizione || "").toLowerCase().includes(searchValue);
+    return matchesUtente && matchesSearch;
   });
 
   populateTable(filtered);
 }
 
 
-function populateBeneficiarioFilter() {
-  const select = document.getElementById("beneficiarioFilter");
+function populateUtenteFilter() {
+  const select = document.getElementById("UtenteFilter");
   select.innerHTML = '<option value="">Tutti</option>';
-  const beneficiari = [...new Set(originalData.map(row => row.Beneficiario))].filter(Boolean);
-  beneficiari.forEach(ben => {
+  const utente = [...new Set(originalData.map(row => row.Descrizione))].filter(Boolean);
+  utente.forEach(ben => {
     const option = document.createElement("option");
     option.value = ben;
     option.textContent = ben;

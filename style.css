@@ -21,9 +21,6 @@
         background-color: #b2ff59 !important; /* lime chiaro */
         color: #00c853 !important;
     }
-/*Fine*/
-
-
 #resetbtn{
   background-color: #c40000 !important; /* smeraldo */
         color: #fff !important;
@@ -33,6 +30,7 @@
         color: #c40000 !important;
 }
 
+/*ANIMAZIONE TRA PAGINE*/
 .page {
   display: none;
   animation: fadeIn 0.3s ease-in-out;
@@ -45,3 +43,63 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/*STILE TABELLA*/
+th {
+  vertical-align: middle;
+}
+.table-rounded{
+  border-radius: 0.5rem;
+  overflow: hidden; /* per evitare che gli angoli arrotondati taglino il contenuto */
+}
+
+/*BOTTONE PER FARE SCROLL TO THE TOP*/
+#scrollTopBtn {
+  background-color: #00c853 !important; /* verde smeraldo */
+  border: none;
+}
+#scrollTopBtn:hover {
+  background-color: #92d841 !important; /* lime chiaro */
+}
+
+/* wrapper con altezza fissa + scroll interno */
+.table-scroll-wrapper {
+  max-height: 420px;      /* regola in base al layout */
+  overflow-y: auto;
+  position: relative;
+  padding: 0.5rem;
+  background: #fff;
+}
+
+/* pulsante globale fisso in basso a destra */
+#scrollTopBtn {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  display: none; /* nascosto fino a che non serve */
+  z-index: 1050;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* pulsante contestuale vicino al contenitore tabella */
+#tableScrollTopBtn {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  display: none;
+  z-index: 1040;
+  border-radius: 0.35rem;
+  padding: 0.35rem 0.5rem;
+}
+
+/* piccolo miglioramento visivo on hover */
+#tableScrollTopBtn:hover, #scrollTopBtn:hover {
+  transform: translateY(-2px);
+  transition: transform 120ms ease;
+}
+
