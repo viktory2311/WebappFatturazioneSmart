@@ -53,6 +53,25 @@ th {
   overflow: hidden; /* per evitare che gli angoli arrotondati taglino il contenuto */
 }
 
+.table-responsive {
+  max-height: 65vh;
+  overflow-x: auto; /* va bene solo l'overflow-x */
+  overflow-y: visible; /* verticale visibile */
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    max-height: 50vh; /* meno spazio su mobile */
+  }
+}
+.table th, .table td {
+  white-space: nowrap; /* Mantiene il testo su una sola riga */
+}
+
+.container{ 
+  margin-left: auto;
+}
+
 /*BOTTONE PER FARE SCROLL TO THE TOP*/
 #scrollTopBtn {
   background-color: #00c853 !important; /* verde smeraldo */
@@ -60,15 +79,6 @@ th {
 }
 #scrollTopBtn:hover {
   background-color: #92d841 !important; /* lime chiaro */
-}
-
-/* wrapper con altezza fissa + scroll interno */
-.table-scroll-wrapper {
-  max-height: 420px;      /* regola in base al layout */
-  overflow-y: auto;
-  position: relative;
-  padding: 0.5rem;
-  background: #fff;
 }
 
 /* pulsante globale fisso in basso a destra */

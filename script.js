@@ -159,7 +159,25 @@ function populateTable(data) {
     // INSERIMENTO CODICE FISCALE
     const codiceFiscale = row.CodiceFiscale || row["Codice Fiscale Cliente"] || "";
     // INSERIMENTO DA COLLONNA C-ADI FINO MINORI DISABILI GRAVI
+    const assistenzaDomiciliareIntegrata = row["Assistenza Domiciliare Integrata"] || row["C-ADI"] || "";
+    const anianoAutosuficente = row["Anziano Autosufficiente"] || row["C - Anziano autosufficiente"] || "";
+    const anianoNonAutosuficente = row["Anziano Non Autosufficiente"] || row["C - Anziano non autosufficiente"] || "";
+    const contrattiPrivati = row["Contratti Privati"] || row["C - Contratti privati"] || "";
+    const disabile = row["Disabile"] || row["C - Disabile"] || "";
+    const distrettoNord = row["Distretto Nord"] || row["C - DISTRETTO NORD"] || "";
+    const distrettoSud = row["Distretto Sud"] || row["C - DISTRETTO SUD"] || "";
+    const emergenzaCaldoASL = row["Emergenza Caldo ASL"] || row["C - EMERGENZA CALDO ASL"] || "";
+    const emergenzaCaldoComune = row["Emergenza Caldo Comune"] || row["C - EMERGENZA CALDO COMUNE"] || "";
+    const hcp = row["HCP"] || row["C - HCP"] || "";
+    const minoriDisabiliGravi = row["Minori Disabili Gravi"] || row["C - Minori disabili gravi"] || "";
     // INSERIMENTO DA COLONNA NORD FINO VIA TESSO
+    const nordOvest = row["Nord Ovest"] || row["C - Nord Ovest"] || "";
+    const pnrr = row["PNRR"] || row["C - PNRR"] || "";
+    const progettoSOD = row["Progetto SOD"] || row["C - Progetto SOD"] || "";
+    const sudEst = row["Sud Est"] || row["C - Sud Est"] || "";
+    const sudOvest = row["Sud Ovest"] || row["C - Sud Ovest"] || "";
+    const ufficio = row["Ufficio"] || row["C - Ufficio"] || "";
+    const viaTesso = row["C - UFFICIO VIA TESSO"] || "";
     // INSERIMENTO TOTALE ORE DEL MESE
     const totaleOre = row.totaleOre || row["Totale"] || "";
 
@@ -175,8 +193,23 @@ function populateTable(data) {
       <td>${dataFormattata}</td>
       <td>${indirizzo}</td>
       <td>${codiceFiscale}</td>
-      <td>${totaleOre}</td>
-      <td>${codiceFiscale}</td>
+      <td>${assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : ""}</td>
+      <td>${anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : ""}</td>
+      <td>${anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : ""}</td>
+      <td>${contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : ""}</td>
+      <td>${disabile ? parseFloat(disabile).toFixed(2) : ""}</td>
+      <td>${distrettoNord ? parseFloat(distrettoNord).toFixed(2) : ""}</td>
+      <td>${distrettoSud ? parseFloat(distrettoSud).toFixed(2)  : ""}</td>
+      <td>${emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : ""}</td>
+      <td>${emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : ""}</td>
+      <td>${hcp ? parseFloat(hcp).toFixed(2) : ""}</td>
+      <td>${minoriDisabiliGravi ? parseFloat(minoriDisabiliGravi).toFixed(2) : ""}</td>
+      <td>${nordOvest ? parseFloat(nordOvest).toFixed(2) : ""}</td>
+      <td>${pnrr ? parseFloat(pnrr).toFixed(2) : ""}</td>
+      <td>${progettoSOD ? parseFloat(progettoSOD).toFixed(2) : ""}</td>
+      <td>${sudEst ? parseFloat(sudEst).toFixed(2) : ""}</td>
+      <td>${sudOvest ? parseFloat(sudOvest).toFixed(2) : ""}</td>
+      <td>${ufficio ? parseFloat(ufficio).toFixed(2) : ""}</td>
       <td>${totaleOre.toFixed(2)}</td>
     `;
     tableBody.appendChild(tr);
