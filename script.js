@@ -4,6 +4,9 @@ function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
 }
+  function showMeaning(text) {
+  alert(text);
+}
 
 window.onload = () => {
   // Recupera dati salvati
@@ -92,6 +95,12 @@ function loadFile() {
         skipEmptyLines: true,
         complete: function(results) {
           originalData = results.data;
+          // ordina subito
+                originalData.sort((a, b) => {
+                  const nomeA = (a.Descrizione || "").trim();
+                  const nomeB = (b.Descrizione || "").trim();
+                  return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" }); // Confronta le stringhe in modo non case-insensitive quindi B == b e viene ordinato in modo corretto
+                });
           saveData();
           populateUtenteFilter();
           applyFilters();
@@ -109,6 +118,13 @@ function loadFile() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet, {range: 1}); // Salta la prima riga
       originalData = jsonData; // già con header → oggetti tipo { Descrizione:..., Bday:..., Indirizzo:... }
+      // ordina subito
+            originalData.sort((a, b) => {
+            const nomeA = (a.Descrizione || "").trim();
+            const nomeB = (b.Descrizione || "").trim();
+            return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" }); // Confronta le stringhe in modo non case-insensitive quindi B == b e viene ordinato in modo corretto
+          });
+          console.log(originalData.map(r => r.Descrizione));
       saveData();
       populateUtenteFilter();
       applyFilters();
@@ -248,4 +264,63 @@ function populateUtenteFilter() {
     option.textContent = ben;
     select.appendChild(option);
   });
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+
+  // Crea il PDF in orizzontale
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  // Titolo del report
+  doc.setFontSize(14);
+  doc.text("Report Fatturazione", 14, 10);
+
+  // Genera la tabella da HTML
+  doc.autoTable({
+    html: '#dataTable2',       // id della tabella
+    startY: 20,
+    styles: {
+      fontSize: 7,
+      cellPadding: 2,
+      overflow: 'linebreak', // testo lungo va a capo
+      valign: 'middle',
+      halign: 'center'
+    },
+    headStyles: {
+      fillColor: [33, 37, 41], // header scuro
+      textColor: 255,
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    showHead: 'everyPage', // header ripetuto su ogni pagina
+    bodyStyles: {
+      halign: 'center',
+      valign: 'middle'
+    },
+    columnStyles: {
+      0: { cellWidth: 30 }, // UTENTE
+      1: { cellWidth: 25 }, // DATA DI NASCITA
+      2: { cellWidth: 40 }, // INDIRIZZO
+      3: { cellWidth: 30 }  // CODICE FISCALE
+      // altre colonne auto
+    },
+    tableWidth: 'auto',
+    showHead: 'everyPage', // ✅ header ripetuto su ogni pagina
+    margin: { top: 20 }    // spazio per il titolo
+  });
+
+  // Salva PDF
+  doc.save("fatturazione.pdf");
+}
+
+
+function exportExcel() {
+  const table = document.getElementById("dataTable");
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Fatturazione" });
+  XLSX.writeFile(wb, "fatturazione.xlsx");
 }
