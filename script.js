@@ -117,14 +117,29 @@ function loadFile() {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet, {range: 1}); // Salta la prima riga
+
+     // const headerRow = jsonData[0];
+       // console.log("Header intero:", headerRow);
+
+        //const intestazione = jsonData[0][18];
+        //console.log("Intestazione colonna:", intestazione);
+
+    // supponiamo che "intestazione" sia "01 lug 2025"
+//const mese = aggiornaMeseDaIntestazione(intestazione);
+
+// Se vuoi, puoi anche aggiornare la label che avevi in pagina
+//document.getElementById("totaleUtenti").innerText = "Mese selezionato: " + mese;
+
+      //handleFileLoad(jsonData);
       originalData = jsonData; // già con header → oggetti tipo { Descrizione:..., Bday:..., Indirizzo:... }
+      aggiornaMeseDaHeader(originalData);
       // ordina subito
             originalData.sort((a, b) => {
             const nomeA = (a.Descrizione || "").trim();
             const nomeB = (b.Descrizione || "").trim();
             return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" }); // Confronta le stringhe in modo non case-insensitive quindi B == b e viene ordinato in modo corretto
           });
-          console.log(originalData.map(r => r.Descrizione));
+          //console.log(originalData.map(r => r.Descrizione));
       saveData();
       populateUtenteFilter();
       applyFilters();
@@ -136,6 +151,57 @@ function loadFile() {
     alert("Formato file non supportato. Usa CSV o XLSX.");
   }
 }
+
+
+
+
+  function aggiornaMeseDaHeader(data) {
+  if (!data || data.length === 0) return;
+
+  // Prendo le chiavi del primo oggetto (sono le intestazioni del file)
+  const headers = Object.keys(data[0]);
+
+  // Cerco la colonna che ha dentro una data tipo "01 lug 2025"
+  const intestazione = headers.find(h => /^\d{2}\s[a-z]{3}\s\d{4}$/i.test(h));
+
+  if (!intestazione) return;
+
+  // es. "01 lug 2025" → "lug"
+  const parts = intestazione.split(" ");
+  const abbrev = (parts[1] || "-").toLowerCase();
+
+  // Mappa mesi
+  const mesiMap = {
+    gen: "Gennaio",
+    feb: "Febbraio",
+    mar: "Marzo",
+    apr: "Aprile",
+    mag: "Maggio",
+    giu: "Giugno",
+    lug: "Luglio",
+    ago: "Agosto",
+    set: "Settembre",
+    ott: "Ottobre",
+    nov: "Novembre",
+    dic: "Dicembre"
+  };
+
+  const meseCompleto = mesiMap[abbrev] || abbrev;
+
+  // Seleziona l'ultima colonna dell'header della tabella
+  const labelanteprimadati = document.getElementById("labelAnteprimaDati");
+  labelanteprimadati.textContent = `Anteprima Dati - Mese: ${meseCompleto}`;
+
+  const table = document.getElementById("mainTable");
+  const thead = table.querySelector("thead");
+  const ths = thead.querySelectorAll("th");
+  // Aggiorna solo l'ultima colonna (Totale Ore Mese)
+  ths[ths.length - 1].textContent = `TOTALE ORE MESE ${meseCompleto.toUpperCase()}`;
+  console.log("Mese aggiornato:", meseCompleto);
+  return meseCompleto;
+}
+
+
 
  
 function excelDateToJSDate(serial) {
@@ -149,6 +215,7 @@ function excelDateToJSDate(serial) {
 function populateTable(data) {
   const tableBody = document.getElementById("dataTable");
   tableBody.innerHTML = "";
+
   let totaleUtenti = 0;
 
   data.forEach(row => {
@@ -238,6 +305,37 @@ function populateTable(data) {
   }
 }
 
+/*function handleFileLoad(data) {
+  if (!data || !data.length) return;
+
+  // Popola la tabella con tutti i dati
+  populateTable(data);
+
+  // Leggi direttamente la colonna 19 (indice 18)
+  const firstRow = data[0];
+  const rawDate = Object.values(firstRow)[18]; // colonna 19
+  if (!rawDate) return;
+
+  // Esempio: "2 lug 2025"
+  const parts = rawDate.trim().split(" "); // ["2", "lug", "2025"]
+  const monthNamesIt = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+  const monthNamesFull = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+  const mese = monthNamesIt.indexOf(parts[1].toLowerCase());
+  const anno = parseInt(parts[2],10);
+  const giorno = parseInt(parts[0], 10);
+
+  if (mese >= 0 && !isNaN(anno) && !isNaN(giorno)) {
+    const meseNome = monthNamesFull[mese];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="10">TOTALE ORE MESE ${giorno} ${meseNome} ${anno}</td>`;
+    document.getElementById("dataTable").appendChild(tr);
+  } else {
+    console.log("Data non valida nella colonna 19:", rawDate);
+  }
+}
+*/
+
+
 // Filtro dati per Utente
 
 function applyFilters() {
@@ -282,7 +380,7 @@ function exportPDF() {
 
   // Genera la tabella da HTML
   doc.autoTable({
-    html: '#dataTable2',       // id della tabella
+    html: '#mainTable',       // id della tabella
     startY: 20,
     styles: {
       fontSize: 7,

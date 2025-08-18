@@ -33,12 +33,12 @@
         <input type="file" id="fileInput" class="form-control d-none">
       </div>
       <button class="btn btn-primary" onclick="loadFile()">Carica</button>
-      <p class="mt-3 text-muted">Formato richiesto: Beneficiario, Ore, Tariffa</p>
+      <p class="mt-3 text-muted">Formato richiesto: Descrizione, Bday, Indirizzo</p>
     </div>
 
     <!-- SEZIONE DATI -->
     <div id="dati" class="page active">
-      <h2>Anteprima Dati</h2>
+      <h2 id="labelAnteprimaDati">Anteprima Dati</h2>
       
       <!-- FILTRI -->
       <div class="mb-3">
@@ -73,7 +73,7 @@
       <!-- CREAZIONE TABELLA -->
       <div class="table-wrapper">
   <div class="table-scroll">
-    <table id="dataTable2" class="table table-bordered table-hover table-rounded">
+    <table id="mainTable" class="table table-bordered table-hover table-rounded">
       <thead class="table-dark">
         <tr>
           <th class="text-center">UTENTE</th>
