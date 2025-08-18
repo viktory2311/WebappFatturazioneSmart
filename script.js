@@ -119,18 +119,11 @@ function loadFile() {
       const jsonData = XLSX.utils.sheet_to_json(sheet, {range: 1}); // Salta la prima riga
 
      // const headerRow = jsonData[0];
-       // console.log("Header intero:", headerRow);
+     // console.log("Header intero:", headerRow);
 
-        //const intestazione = jsonData[0][18];
-        //console.log("Intestazione colonna:", intestazione);
-
-    // supponiamo che "intestazione" sia "01 lug 2025"
-//const mese = aggiornaMeseDaIntestazione(intestazione);
-
-// Se vuoi, puoi anche aggiornare la label che avevi in pagina
-//document.getElementById("totaleUtenti").innerText = "Mese selezionato: " + mese;
-
-      //handleFileLoad(jsonData);
+     //const intestazione = jsonData[0][18];
+     //console.log("Intestazione colonna:", intestazione);
+     
       originalData = jsonData; // già con header → oggetti tipo { Descrizione:..., Bday:..., Indirizzo:... }
       aggiornaMeseDaHeader(originalData);
       // ordina subito
@@ -305,37 +298,6 @@ function populateTable(data) {
   }
 }
 
-/*function handleFileLoad(data) {
-  if (!data || !data.length) return;
-
-  // Popola la tabella con tutti i dati
-  populateTable(data);
-
-  // Leggi direttamente la colonna 19 (indice 18)
-  const firstRow = data[0];
-  const rawDate = Object.values(firstRow)[18]; // colonna 19
-  if (!rawDate) return;
-
-  // Esempio: "2 lug 2025"
-  const parts = rawDate.trim().split(" "); // ["2", "lug", "2025"]
-  const monthNamesIt = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
-  const monthNamesFull = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-  const mese = monthNamesIt.indexOf(parts[1].toLowerCase());
-  const anno = parseInt(parts[2],10);
-  const giorno = parseInt(parts[0], 10);
-
-  if (mese >= 0 && !isNaN(anno) && !isNaN(giorno)) {
-    const meseNome = monthNamesFull[mese];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="10">TOTALE ORE MESE ${giorno} ${meseNome} ${anno}</td>`;
-    document.getElementById("dataTable").appendChild(tr);
-  } else {
-    console.log("Data non valida nella colonna 19:", rawDate);
-  }
-}
-*/
-
-
 // Filtro dati per Utente
 
 function applyFilters() {
@@ -350,7 +312,6 @@ function applyFilters() {
 
   populateTable(filtered);
 }
-
 
 function populateUtenteFilter() {
   const select = document.getElementById("UtenteFilter");
@@ -415,7 +376,6 @@ function exportPDF() {
   // Salva PDF
   doc.save("fatturazione.pdf");
 }
-
 
 function exportExcel() {
   const table = document.getElementById("dataTable");
