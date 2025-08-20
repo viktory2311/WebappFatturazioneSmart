@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Fatturazione Smart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="p-0">
+
+  <!-- HEADER -->
+  <header class="app-header shadow-sm p-3 mb-4 bg-primary text-white d-flex align-items-center">
+    <div class="logo me-3"><img src="{% static 'Assets/collaborative.png'%}"></img></div>
+    <h1 class="m-0 fs-3" style="cursor:pointer" onclick="showPage('upload')">Fatturazione Smart</h1>
+  </header>
+  <!-- MENU DI NAVIGAZIONE -->
+  <nav class="mb-4 d-flex justify-content-center gap-2">
+    <button class="btn btn-outline-light nav-btn" onclick="showPage('upload')">📂 Upload</button>
+    <button class="btn btn-outline-light nav-btn" onclick="showPage('dati')">📊 Visualizza Dati</button>
+    <button class="btn btn-outline-light nav-btn" onclick="showPage('fatture')">🧾 Genera Fatture</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- SEZIONE UPLOAD -->
+    <div id="upload" class="page ">
+      <h2>Carica File CSV</h2>
+      <div id="drop-area" class="border border-2 border-primary rounded p-5 text-center mb-3 bg-light" style="cursor:pointer;">
+        <div id="drop-message" class="text-secondary">
+          Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>
+        </div>
+        <input type="file" id="fileInput" class="form-control d-none">
+      </div>
+      <button class="btn btn-primary" onclick="loadFile()">Carica</button>
+      <p class="mt-3 text-muted">Formato richiesto: Descrizione, Bday, Indirizzo</p>
+    </div>
+
+    <!-- SEZIONE DATI -->
+    <div id="dati" class="page active">
+      <h2 id="labelAnteprimaDati">Anteprima Dati</h2>
+      
+      <!-- FILTRI -->
+      <div class="mb-3">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+          <div class="d-flex align-items-center gap-2">
+            <label class="ms-2 mb-0">Cerca:</label>
+            <input type="text" id="searchInput" class="form-control" placeholder="Cerca..." style="width:180px" oninput="applyFilters()">
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <label class="mb-0">Filtra per Utente:</label>
+            <select id="UtenteFilter" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+           <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-outline-light" id="resetbtn" onclick="resetData()">Reset Dati</button>
+          </div>
+          <!-- Qui puoi aggiungere altri filtri in futuro, ad esempio: -->
+          <!--
+          <div class="d-flex align-items-center gap-2">
+            <label class="mb-0">Altro filtro:</label>
+            <select class="form-select mb-0" style="width:auto;">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+          -->
+        </div>
+      </div>
+
+      <strong><p id="totaleUtenti"></p></strong>
+
+      <!-- CREAZIONE TABELLA -->
+      <div class="table-wrapper">
+  <div class="table-scroll">
+    <table id="mainTable" class="table table-bordered table-hover table-rounded">
+      <thead class="table-dark">
+        <tr>
+          <th class="text-center">UTENTE</th>
+          <th class="text-center">DATA DI NASCITA</th>
+          <th class="text-center">INDIRIZZO</th>
+          <th class="text-center">CODICE FISCALE</th>
+          <th class="text-center">
+              <div style="display: flex; align-items: center; gap: 5px;">
+                C - ADI 
+                <img src="{% static 'Assets/question-mark.png' %}" 
+                    alt="info" 
+                    style="width:18px; height:18px; cursor:pointer;" 
+              onclick="showMeaning('C - ADI significa: \nAssistenza Domiciliare Integrata. Si riferisce ai servizi di assistenza domiciliare per persone anziane o disabili che necessitano di supporto nelle attività quotidiane.')">
+              </div>
+            </th>
+          <th class="text-center">C - Anziano autosufficiente</th>
+          <th class="text-center">C - Anziano non autosufficiente</th>
+          <th class="text-center">C - Contratti privati</th>
+          <th class="text-center">C - Disabile</th>
+          <th class="text-center">C - DISTRETTO NORD</th>
+          <th class="text-center">C - DISTRETTO SUD</th>
+          <th class="text-center">C - EMERGENZA CALDO ASL</th>
+          <th class="text-center">C - EMERGENZA CALDO COMUNE</th>
+          <th class="text-center">
+              <div style="display: flex; align-items: center; gap: 5px;">
+                C - HCP
+                <img src="{% static 'Assets/question-mark.png' %}" 
+                    alt="info" 
+                    style="width:18px; height:18px; cursor:pointer;" 
+                    onclick="showMeaning('C - HCP significa: \nHome Care Package. Si riferisce a un pacchetto di servizi di assistenza domiciliare personalizzati per persone con bisogni complessi.')">
+              </div>
+            </th>
+          <th class="text-center">C - Minori Disabili Gravi</th>
+          <th class="text-center">C - Nord Ovest</th>
+          <th class="text-center">C - PNRR</th>
+          <th class="text-center">C - Progetto SOD</th>
+          <th class="text-center">C - Sud-Est</th>
+          <th class="text-center">C - Sud-Ovest</th>
+          <th class="text-center">C - UFFICIO VIA TESSO</th>
+          <th class="text-center">TOTALE ORE MESE</th>
+        </tr>
+      </thead>
+      <tbody id="dataTable">
+        <tr><td colspan="22" class="text-center">Nessun dato caricato</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+      
+    </div>
+
+    <!-- SEZIONE FATTURE -->
+    <div id="fatture" class="page">
+      <h2>Genera Fatture</h2>
+      <button class="btn btn-success me-2" onclick="exportPDF()">📄 Genera PDF</button>
+      <button class="btn btn-warning" onclick="exportExcel()">📊 Esporta Excel</button>
+      <p class="mt-3 text-muted">Funzionalità in sviluppo</p>
+    </div>
+
+  </main>
+<!-- Pulsante globale "scroll to top" della pagina -->
+<button id="scrollTopBtn" class="btn btn-primary shadow-lg" aria-label="Torna su" title="Torna su">
+  <i class="bi bi-arrow-up-short fs-4"></i>
+</button>
+
+<!-- Pulsante contestuale per il contenitore tabella -->
+<button id="tableScrollTopBtn" class="btn btn-secondary shadow-sm" aria-label="Torna all'inizio della tabella" title="Torna in cima alla tabella">
+  <i class="bi bi-arrow-up"></i>
+</button>
+  <!-- PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="{% static 'script.js' %}"></script>
+  <script src="scriptBtnScrollUp.js"></script>
+</body>
+</html>

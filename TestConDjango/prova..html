@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Date</title>
+</head>
+<body>
+  <h1>Test Data di Nascita</h1>
+
+  <script>
+    // Test del parsing della data
+    const data = "1927-06-18";
+    const dataFormattata = new Date(data).toLocaleDateString("it-IT");
+
+    console.log("Data originale:", data);
+    console.log("Data formattata (it-IT):", dataFormattata);
+
+    // Stampo anche nel body, non solo in console
+    document.body.innerHTML += `<p><strong>Data formattata:</strong> ${dataFormattata}</p>`;
+  </script>
+</body>
+</html>
