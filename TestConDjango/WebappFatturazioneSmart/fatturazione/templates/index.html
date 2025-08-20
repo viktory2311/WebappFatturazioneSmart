@@ -57,6 +57,17 @@
            <div class="d-flex align-items-center gap-2">
               <button class="btn btn-outline-light" id="resetbtn" onclick="resetData()">Reset Dati</button>
           </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <input type="checkbox" id="filterCheckboxadi" class="form-check-input m-0" onchange="applyFilters()">
+            <label for="filterCheckbox" class="mb-0">C-ADI</label>
+          </div>
+
+           <div class="d-flex align-items-center gap-2">
+            <input type="checkbox" id="filterCheckboxhcp" class="form-check-input m-0" onchange="applyFilters()">
+            <label for="filterCheckbox" class="mb-0">C-HCP</label>
+          </div>
+
           <!-- Qui puoi aggiungere altri filtri in futuro, ad esempio: -->
           <!--
           <div class="d-flex align-items-center gap-2">

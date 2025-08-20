@@ -372,11 +372,20 @@ function populateTable(data) {
 function applyFilters() {
   const utenteValue = document.getElementById("UtenteFilter").value;
   const searchValue = document.getElementById("searchInput").value.toLowerCase();
+  const filterCheckboxadi = document.getElementById("filterCheckboxadi").checked;
+  const filterCheckboxhcp = document.getElementById("filterCheckboxhcp").checked;
 
   const filtered = originalData.filter(row => {
-    const matchesUtente = !utenteValue || row.Descrizione === utenteValue;
-    const matchesSearch = (row.Descrizione || "").toLowerCase().includes(searchValue);
-    return matchesUtente && matchesSearch;
+  const matchesUtente = !utenteValue || row.Descrizione === utenteValue;
+  const matchesSearch = (row.Descrizione || "").toLowerCase().includes(searchValue);
+
+  const colonnaadiValue = row["Assistenza Domiciliare Integrata"] || row["C-ADI"] || 0;
+  const matchesCheckbox = !filterCheckboxadi || colonnaadiValue > 0;
+
+  const colonnahcpValue = row["HCP"] || row["C - HCP"] || 0;
+  const matchesCheckboxHCP = !filterCheckboxhcp || colonnahcpValue > 0;
+  
+  return matchesUtente && matchesSearch && matchesCheckbox && matchesCheckboxHCP;
   });
 
   populateTable(filtered);

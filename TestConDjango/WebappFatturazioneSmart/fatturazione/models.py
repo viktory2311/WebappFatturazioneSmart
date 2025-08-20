@@ -7,7 +7,7 @@ class Utente(models.Model):
     codice_fiscale = models.CharField(max_length=16, blank=True)
 
      # Colonne da C-ADI fino Minori Disabili Gravi
-    assistenza_domiciliare_integrata = models.CharField(max_length=255, blank=True)
+    assistenza_domiciliare_integrata = models.FloatField(default=0)
     anziano_autosufficiente = models.CharField(max_length=255, blank=True)
     anziano_non_autosufficiente = models.CharField(max_length=255, blank=True)
     contratti_privati = models.CharField(max_length=255, blank=True)

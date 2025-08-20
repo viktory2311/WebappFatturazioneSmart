@@ -26,7 +26,7 @@ def salva_dati(request):
                 indirizzo=row.get("Indirizzo Cliente", ""),
                 codice_fiscale=row.get("Codice Fiscale Cliente", ""),
 
-                assistenza_domiciliare_integrata=row.get("Assistenza Domiciliare Integrata", "") or row.get("C-ADI", ""),
+                assistenza_domiciliare_integrata=float((row.get("Assistenza Domiciliare Integrata", "") or row.get("C-ADI", "")),0),
                 anziano_autosufficiente=row.get("Anziano Autosufficiente", "") or row.get("C - Anziano autosufficiente", ""),
                 anziano_non_autosufficiente=row.get("Anziano Non Autosufficiente", "") or row.get("C - Anziano non autosufficiente", ""),
                 contratti_privati=row.get("Contratti Privati", "") or row.get("C - Contratti privati", ""),
