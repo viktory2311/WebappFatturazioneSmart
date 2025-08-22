@@ -22,7 +22,7 @@
     <button class="btn btn-outline-light nav-btn" onclick="showPage('fatture')">🧾 Genera Fatture</button>
   </nav>
 
-  <main class="container">
+  <main class="container-fluid px-5">
 
     <!-- SEZIONE UPLOAD -->
     <div id="upload" class="page ">
@@ -38,7 +38,7 @@
     </div>
 
     <!-- SEZIONE DATI -->
-    <div id="dati" class="page active">
+    <div id="dati" class="page">
       <h2 id="labelAnteprimaDati">Anteprima Dati</h2>
       
       <!-- FILTRI -->
@@ -54,9 +54,19 @@
               <option value="">Tutti</option>
             </select>
           </div>
-           <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-light" id="resetbtn" onclick="resetData()">Reset Dati</button>
+          <div class="d-flex align-items-center gap-2">
+            <label class="mb-0">Filtra per Tipo Anziano:</label>
+            <select id="filtertipoAnziano" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
+              <option value="">Tutti</option>
+            </select>
           </div>
+          <div class="d-flex align-items-center gap-2">
+            <label class="mb-0">Filtra per Distretto:</label>
+            <select id="filterDistretto" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+          
 
           <div class="d-flex align-items-center gap-2">
             <input type="checkbox" id="filterCheckboxadi" class="form-check-input m-0" onchange="applyFilters()">
@@ -67,7 +77,10 @@
             <input type="checkbox" id="filterCheckboxhcp" class="form-check-input m-0" onchange="applyFilters()">
             <label for="filterCheckbox" class="mb-0">C-HCP</label>
           </div>
-
+          
+           <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-outline-light" id="resetbtn" onclick="resetData()">Reset Dati</button>
+          </div>
           <!-- Qui puoi aggiungere altri filtri in futuro, ad esempio: -->
           <!--
           <div class="d-flex align-items-center gap-2">
@@ -138,29 +151,34 @@
     </div>
 
     <!-- SEZIONE FATTURE -->
-    <div id="fatture" class="page">
-      <h2>Genera Fatture</h2>
-      <button class="btn btn-success me-2" onclick="exportPDF()">📄 Genera PDF</button>
-      <button class="btn btn-warning" onclick="exportExcel()">📊 Esporta Excel</button>
-      <p class="mt-3 text-muted">Funzionalità in sviluppo</p>
+      <div id="fatture" class="page active">
+    <h2>Genera Fattura:</h2>
+
+    <!-- Selezione tipo fattura -->
+    <div class="fattura-options">
+      <button class="btn btn-info " onclick="setFattura('anziani_non_autosufficenti')">Anziani non Autosufficenti</button>
+      <button class="btn btn-info" onclick="setFattura('anziani_autosufficenti')">Anziani Autosufficenti</button>
+      <button class="btn btn-info" onclick="setFattura('disabili')">Disabili</button>
+      <button class="btn btn-info" onclick="setFattura('minori_disabili_gravi')">Minori disabili gravi</button>
+      <button class="btn btn-info" onclick="setFattura('emergenza_caldo')">Emergenza caldo</button>
+
     </div>
 
-  </main>
-<!-- Pulsante globale "scroll to top" della pagina -->
-<button id="scrollTopBtn" class="btn btn-primary shadow-lg" aria-label="Torna su" title="Torna su">
-  <i class="bi bi-arrow-up-short fs-4"></i>
-</button>
+    <!-- Descrizione dei parametri -->
+    <div id="fattura-description" class="mt-3">
+      <p class="text-muted">Seleziona un tipo di fattura per vedere i parametri.</p>
+    </div>
 
-<!-- Pulsante contestuale per il contenitore tabella -->
-<button id="tableScrollTopBtn" class="btn btn-secondary shadow-sm" aria-label="Torna all'inizio della tabella" title="Torna in cima alla tabella">
-  <i class="bi bi-arrow-up"></i>
-</button>
+    <!-- Bottone per esportare Excel -->
+    <button class="btn btn-warning mt-3" onclick="exportExcel()">📊 Esporta Excel</button>
+  </div>
+
+
+  </main>
   <!-- PapaParse -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="{% static 'script.js' %}"></script>
-  <script src="scriptBtnScrollUp.js"></script>
 </body>
 </html>

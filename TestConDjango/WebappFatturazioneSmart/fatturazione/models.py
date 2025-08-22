@@ -8,27 +8,29 @@ class Utente(models.Model):
 
      # Colonne da C-ADI fino Minori Disabili Gravi
     assistenza_domiciliare_integrata = models.FloatField(default=0)
-    anziano_autosufficiente = models.CharField(max_length=255, blank=True)
-    anziano_non_autosufficiente = models.CharField(max_length=255, blank=True)
-    contratti_privati = models.CharField(max_length=255, blank=True)
-    disabile = models.CharField(max_length=255, blank=True)
-    distretto_nord = models.CharField(max_length=255, blank=True)
-    distretto_sud = models.CharField(max_length=255, blank=True)
-    emergenza_caldo_asl = models.CharField(max_length=255, blank=True)
-    emergenza_caldo_comune = models.CharField(max_length=255, blank=True)
-    hcp = models.CharField(max_length=255, blank=True)
-    minori_disabili_gravi = models.CharField(max_length=255, blank=True)
+    anziano_autosufficiente = models.FloatField(default=0)
+    anziano_non_autosufficiente = models.FloatField(default=0)
+    contratti_privati = models.FloatField(default=0)
+    disabile = models.FloatField(default=0)
+    distretto_nord = models.FloatField(default=0)
+    distretto_sud = models.FloatField(default=0)
+    emergenza_caldo_asl = models.FloatField(default=0)
+    emergenza_caldo_comune = models.FloatField(default=0)
+    hcp = models.FloatField(default=0)
+    minori_disabili_gravi = models.FloatField(default=0)
 
     # Colonne da Nord Ovest fino Via Tesso
-    nord_ovest = models.CharField(max_length=255, blank=True)
-    pnrr = models.CharField(max_length=255, blank=True)
-    progetto_sod = models.CharField(max_length=255, blank=True)
-    sud_est = models.CharField(max_length=255, blank=True)
-    sud_ovest = models.CharField(max_length=255, blank=True)
-    ufficio = models.CharField(max_length=255, blank=True)
-    via_tesso = models.CharField(max_length=255, blank=True)
+    nord_ovest = models.FloatField(default=0)
+    pnrr = models.FloatField(default=0)
+    progetto_sod = models.FloatField(default=0)
+    sud_est = models.FloatField(default=0)
+    sud_ovest = models.FloatField(default=0)
+    ufficio = models.FloatField(default=0)
+    via_tesso = models.FloatField(default=0)
 
     totale_ore = models.FloatField(default=0)
+
+    data_riferimento = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.nome

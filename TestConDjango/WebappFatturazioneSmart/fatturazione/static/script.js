@@ -1,140 +1,135 @@
 let originalData = [];
 
+/* FUNZIONE PER SCEGLIERE LA CORRETTA PAGINA DA MOSTRARE*/
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
 }
-  function showMeaning(text) {
-  alert(text);
-}
-
-window.onload = () => {
-  // Recupera dati salvati
-  //const savedData = localStorage.getItem("fatturazioneData");
-  //if (savedData) {
-  //originalData = JSON.parse(savedData);
-  //populateUtenteFilter();
-  //applyFilters();
-  //}
+/*--- FINE ---*/
 
 
- // ---- Qui inseriamo il fetch dai server ----
-fetch("/utenti/")
-  .then(res => {
-    if (!res.ok) throw new Error("Errore HTTP: " + res.status);
-    return res.json();
-  })
-  .then(data => {
-    console.log("Dati ricevuti dal server:", data);
+/* GESTIONE CARICAMENTO DATI INIZIALI */
+window.onload = () => { 
+            // Recupera dati salvati
+            //const savedData = localStorage.getItem("fatturazioneData");
+            //if (savedData) {
+            //originalData = JSON.parse(savedData);
+            //populateUtenteFilter();
+            //applyFilters();
+            //}
 
-    // 🔄 Mappo i campi dal formato DB → formato frontend (uguale a CSV/XLSX)
-    originalData = data.map(u => ({
-      "Descrizione": u.nome,
-      "Data di Nascita Cliente": formatDateIfValid(u.data_nascita),
-      "Indirizzo Cliente": u.indirizzo,
-      "Codice Fiscale Cliente": u.codice_fiscale,
 
-      // Colonne da C-ADI fino Minori Disabili Gravi
-      "Assistenza Domiciliare Integrata": u.assistenza_domiciliare_integrata,
-      "Anziano Autosufficiente": u.anziano_autosufficiente,
-      "Anziano Non Autosufficiente": u.anziano_non_autosufficiente,
-      "Contratti Privati": u.contratti_privati,
-      "Disabile": u.disabile,
-      "Distretto Nord": u.distretto_nord,
-      "Distretto Sud": u.distretto_sud,
-      "Emergenza Caldo ASL": u.emergenza_caldo_asl,
-      "Emergenza Caldo Comune": u.emergenza_caldo_comune,
-      "HCP": u.hcp,
-      "Minori Disabili Gravi": u.minori_disabili_gravi,
+          // ---- Qui inseriamo il fetch dai server ----
+            fetch("/utenti/")
+              .then(res => {
+                if (!res.ok) throw new Error("Errore HTTP: " + res.status);
+                return res.json();
+              })
+              .then(data => {
+                                console.log("Dati ricevuti dal server:", data);
 
-      // Colonne da Nord Ovest fino Via Tesso
-      "Nord Ovest": u.nord_ovest,
-      "PNRR": u.pnrr,
-      "Progetto SOD": u.progetto_sod,
-      "Sud Est": u.sud_est,
-      "Sud Ovest": u.sud_ovest,
-      "Ufficio": u.ufficio,
-      "C - UFFICIO VIA TESSO": u.via_tesso,
+                                // 🔄 Mappo i campi dal formato DB → formato frontend (uguale a CSV/XLSX)
+                                originalData = data.map(u => ({
+                                  "Descrizione": u.nome,
+                                  "Data di Nascita Cliente": formatDateIfValid(u.data_nascita),
+                                  "Indirizzo Cliente": u.indirizzo,
+                                  "Codice Fiscale Cliente": u.codice_fiscale,
 
-      "Totale": u.totale_ore
-    }));
+                                  // Colonne da C-ADI fino Minori Disabili Gravi
+                                  "Assistenza Domiciliare Integrata": u.assistenza_domiciliare_integrata,
+                                  "Anziano Autosufficiente": u.anziano_autosufficiente,
+                                  "Anziano Non Autosufficiente": u.anziano_non_autosufficiente,
+                                  "Contratti Privati": u.contratti_privati,
+                                  "Disabile": u.disabile,
+                                  "Distretto Nord": u.distretto_nord,
+                                  "Distretto Sud": u.distretto_sud,
+                                  "Emergenza Caldo ASL": u.emergenza_caldo_asl,
+                                  "Emergenza Caldo Comune": u.emergenza_caldo_comune,
+                                  "HCP": u.hcp,
+                                  "Minori Disabili Gravi": u.minori_disabili_gravi,
 
-    /*originalData.forEach((u, i) => {
-      if (!u["Data di Nascita Cliente"]) {
-        console.log(`❌ Vuota in posizione ${i}`, data[i]); // dati originali
-      } else {
-        console.log(`✅ Data ok in posizione ${i}:`, u["Data di Nascita Cliente"]);
-      }   
-    });*/
-    populateUtenteFilter();
-    applyFilters();
-  })
-  .catch(err => console.error("Errore caricamento utenti:", err));
-  // ------------------------------------------
+                                  // Colonne da Nord Ovest fino Via Tesso
+                                  "Nord Ovest": u.nord_ovest,
+                                  "PNRR": u.pnrr,
+                                  "Progetto SOD": u.progetto_sod,
+                                  "Sud Est": u.sud_est,
+                                  "Sud Ovest": u.sud_ovest,
+                                  "Ufficio": u.ufficio,
+                                  "C - UFFICIO VIA TESSO": u.via_tesso,
+ 
+                                  "Totale": u.totale_ore,
+                                  "Data": u.data_riferimento
+                                }));
 
-// Elementi DOM
-const dropArea = document.getElementById('drop-area');
-const fileInput = document.getElementById('fileInput');
-const dropMessage = document.getElementById('drop-message');
+                              /*originalData.forEach((u, i) => {
+                                if (!u["Data di Nascita Cliente"]) {
+                                  console.log(`❌ Vuota in posizione ${i}`, data[i]); // dati originali
+                                } else {
+                                  console.log(`✅ Data ok in posizione ${i}:`, u["Data di Nascita Cliente"]);
+                                }   
+                              });*/
 
-// Evidenzia area quando si trascina sopra
-['dragenter', 'dragover'].forEach(eventName => {
-  dropArea.addEventListener(eventName, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropArea.classList.add('bg-primary', 'text-white');
-    dropMessage.textContent = "Rilascia il file qui!";
-  });
-});
+                              aggiornaUIconData(originalData);
+                              populateUtenteFilter();
+                              applyFilters();
+                            })
+            .catch(err => console.error("Errore caricamento utenti:", err));
+            // ------------------------------------------
 
-// Rimuovi evidenziazione quando si esce
-['dragleave', 'drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropArea.classList.remove('bg-primary', 'text-white');
-    dropMessage.innerHTML = 'Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>';
-  });
-});
+          // Elementi DOM
+          const dropArea = document.getElementById('drop-area');
+          const fileInput = document.getElementById('fileInput');
+          const dropMessage = document.getElementById('drop-message');
 
-// Gestisci il drop
-dropArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  if (e.dataTransfer.files.length) {
-    fileInput.files = e.dataTransfer.files;
-    loadFile(); // Avvia subito la lettura del file
-  }
-});
+          // Evidenzia area quando si trascina sopra
+          ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dropArea.classList.add('bg-primary', 'text-white');
+              dropMessage.textContent = "Rilascia il file qui!";
+            });
+          });
 
-// Permetti click per aprire il file picker
-dropArea.addEventListener('click', () => fileInput.click());
+          // Rimuovi evidenziazione quando si esce
+          ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dropArea.classList.remove('bg-primary', 'text-white');
+              dropMessage.innerHTML = 'Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>';
+            });
+          });
 
-// Avvia caricamento quando viene selezionato un file
-fileInput.addEventListener('change', loadFile);
+          // Gestisci il drop
+          dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer.files.length) {
+              fileInput.files = e.dataTransfer.files;
+              loadFile(); // Avvia subito la lettura del file
+            }
+          });
+
+          // Permetti click per aprire il file picker
+          dropArea.addEventListener('click', () => fileInput.click());
+
+          // Avvia caricamento quando viene selezionato un file
+          fileInput.addEventListener('change', loadFile);
     
-};
-
+  };
+/* FUNZIONI UTILIZZATE PER GESTIRE IL CARICAMENTO INIZIALE */
 function formatDateIfValid(dateString) {
   if (!dateString) return "--";              // niente data => placeholder
   const d = new Date(dateString);
   if (isNaN(d)) return "--";                  // data non valida => placeholder
   return d.toLocaleDateString("en-EN");      // data valida => formato ITA
 }
+/*--- FINE ---*/
 
-function saveData() {
-  localStorage.setItem("fatturazioneData", JSON.stringify(originalData));
-}
 
-function resetData() {
-  if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
-    localStorage.removeItem("fatturazioneData");
-    originalData = [];
-    populateUtenteFilter();
-    applyFilters();
-  }
-}
 
+/* GESTIONE CARICAMENTO FILE EXCEL */
 function loadFile() {
   const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
@@ -186,14 +181,25 @@ function loadFile() {
      //const intestazione = jsonData[0][18];
      //console.log("Intestazione colonna:", intestazione);
      
-      originalData = jsonData; // già con header → oggetti tipo { Descrizione:..., Bday:..., Indirizzo:... }
+      originalData = jsonData; // già con header → oggetti
       aggiornaMeseDaHeader(originalData);
-      // ordina subito
-            originalData.sort((a, b) => {
-            const nomeA = (a.Descrizione || "").trim();
-            const nomeB = (b.Descrizione || "").trim();
-            return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" }); // Confronta le stringhe in modo non case-insensitive quindi B == b e viene ordinato in modo corretto
-          });
+      
+      if (originalData && originalData.length > 1) {
+  // Estraggo tutte le righe tranne l'ultima
+  const righeDaOrdinare = originalData.slice(0, -1); // tutte tranne l'ultima
+
+  // Ordino
+  righeDaOrdinare.sort((a, b) => {
+    const nomeA = (a.Descrizione || "").trim();
+    const nomeB = (b.Descrizione || "").trim();
+    return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" });
+  });
+
+  // Ricompongo originalData con l'ultima riga (totale) in fondo
+  originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
+  console.log("Dati ordinati:", originalData);
+}
+
           //console.log(originalData.map(r => r.Descrizione));
       //saveData();
       fetch("/salva/", {
@@ -213,16 +219,14 @@ function loadFile() {
     alert("Formato file non supportato. Usa CSV o XLSX.");
   }
 }
+/*--- FINE ---*/
 
-
-
-
-  function aggiornaMeseDaHeader(data) {
+/* GESTIONE VISUALIZZAZIONE MESE CORRENTE GESTITO FRONTEND*/
+function aggiornaMeseDaHeader(data) {
   if (!data || data.length === 0) return;
 
   // Prendo le chiavi del primo oggetto (sono le intestazioni del file)
   const headers = Object.keys(data[0]);
-
   // Cerco la colonna che ha dentro una data tipo "01 lug 2025"
   const intestazione = headers.find(h => /^\d{2}\s[a-z]{3}\s\d{4}$/i.test(h));
 
@@ -234,51 +238,121 @@ function loadFile() {
 
   // Mappa mesi
   const mesiMap = {
-    gen: "Gennaio",
-    feb: "Febbraio",
-    mar: "Marzo",
-    apr: "Aprile",
-    mag: "Maggio",
-    giu: "Giugno",
-    lug: "Luglio",
-    ago: "Agosto",
-    set: "Settembre",
-    ott: "Ottobre",
-    nov: "Novembre",
-    dic: "Dicembre"
+    gen: "01",
+    feb: "02",
+    mar: "03",
+    apr: "04",
+    mag: "05",
+    giu: "06",
+    lug: "07",
+    ago: "08",
+    set: "09",
+    ott: "10",
+    nov: "11",
+    dic: "12"
   };
 
-  const meseCompleto = mesiMap[abbrev] || abbrev;
+  // Converto il mese in numero e formatto la data come "YYYY-MM-DD"
+  const mese = mesiMap[abbrev] || "00"; // Se non trovo il mese, metto "00"
+  const anno = parts[2] || "0000"; // L'anno
 
-  // Seleziona l'ultima colonna dell'header della tabella
-  const labelanteprimadati = document.getElementById("labelAnteprimaDati");
-  labelanteprimadati.textContent = `Anteprima Dati - Mese: ${meseCompleto}`;
+  // Costruisco la data finale in formato "YYYY-MM-DD"
+  const dataFormattata = `${anno}-${mese}-01`; // Assume sempre il giorno "01"
 
-  const table = document.getElementById("mainTable");
-  const thead = table.querySelector("thead");
-  const ths = thead.querySelectorAll("th");
-  // Aggiorna solo l'ultima colonna (Totale Ore Mese)
-  ths[ths.length - 1].textContent = `TOTALE ORE MESE ${meseCompleto.toUpperCase()}`;
+  // Aggiungo la data al mio oggetto (ad ogni record)
+  data.forEach(item => {
+    item.data = dataFormattata;  // Aggiunge la data formattata a ciascun record
+  });
+
+const mesiMapCompleto = {
+    "01": "Gennaio", 
+    "02": "Febbraio", 
+    "03": "Marzo", 
+    "04": "Aprile", 
+    "05": "Maggio", 
+    "06": "Giugno",
+    "07": "Luglio", 
+    "08": "Agosto", 
+    "09": "Settembre", 
+    "10": "Ottobre",
+    "11": "Novembre", 
+    "12": "Dicembre"
+  };
+
+  const meseCompleto = mesiMapCompleto[mese] || mese;
+  // aggiorna UI
+  document.getElementById("labelAnteprimaDati").textContent =
+    `Anteprima Dati - Mese: ${meseCompleto}`;
+
+  const ths = document.querySelectorAll("#mainTable thead th");
+  if (ths.length > 0) {
+    ths[ths.length - 1].textContent =
+      `TOTALE ORE MESE ${meseCompleto.toUpperCase()}`;
+  }
+
   console.log("Mese aggiornato:", meseCompleto);
   return meseCompleto;
 }
+/*--- FINE ---*/
+
+
+
+/* GESTIONE VISUALIZZAZIONE MESE CORRENTE GESTITO BACKEND*/
+function aggiornaUIconData(data) {
+
+  if (!data || data.length === 0) return;
+
+
+  // prendo la data dal primo record
+  const dataStr = data[1].Data; // dipende da come l’hai chiamato
+  if (!dataStr) return;
+
+  const [anno, mese] = dataStr.split("-"); // es. "2025-07-01" → ["2025","07","01"]
+
+  const mesiMap = {
+    "01": "Gennaio", 
+    "02": "Febbraio", 
+    "03": "Marzo", 
+    "04": "Aprile", 
+    "05": "Maggio", 
+    "06": "Giugno",
+    "07": "Luglio", 
+    "08": "Agosto", 
+    "09": "Settembre", 
+    "10": "Ottobre",
+    "11": "Novembre", 
+    "12": "Dicembre"
+  };
+
+  const meseCompleto = mesiMap[mese] || mese;
+  // aggiorna UI
+  document.getElementById("labelAnteprimaDati").textContent =
+    `Anteprima Dati - Mese: ${meseCompleto}`;
+
+  const ths = document.querySelectorAll("#mainTable thead th");
+  if (ths.length > 0) {
+    ths[ths.length - 1].textContent =
+      `TOTALE ORE MESE ${meseCompleto.toUpperCase()}`;
+  }
+
+    //console.log("Mese aggiornato da DB:", meseCompleto);
+  return meseCompleto;
+}
+/*--- FINE ---*/
+
+
 
 
 
  
-function excelDateToJSDate(serial) {
-  const utc_days = Math.floor(serial - 25569);
-  const utc_value = utc_days * 86400; 
-  const date_info = new Date(utc_value * 1000);
-  return date_info.toLocaleDateString("it-IT");
-}
 
-
+/* GESTIONE POPOLAZIONE TABELLA */
 function populateTable(data) {
   const tableBody = document.getElementById("dataTable");
   tableBody.innerHTML = "";
 
   let totaleUtenti = 0;
+  visualizedData = [];  // Resetta i dati visualizzati
 
   data.forEach(row => {
     // INSERIMENTO UTENTE
@@ -331,6 +405,34 @@ function populateTable(data) {
     const importo = ore * tariffa;
     totaleUtenti++;
     
+    // Aggiungi la riga ai dati visualizzati
+    visualizedData.push({
+      descrizione,
+      dataNascita: dataFormattata,
+      indirizzo,
+      codiceFiscale,
+      assistenzaDomiciliareIntegrata: assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : "0.00",
+      anianoAutosuficente: anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : "0.00",
+      anianoNonAutosuficente: anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : "0.00",
+      contrattiPrivati: contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00",
+      disabile: disabile ? parseFloat(disabile).toFixed(2) : "0.00",
+      distrettoNord: distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00",
+      distrettoSud: distrettoSud ? parseFloat(distrettoSud).toFixed(2) : "0.00",
+      emergenzaCaldoASL: emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : "0.00",
+      emergenzaCaldoComune: emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : "0.00",
+      hcp: hcp ? parseFloat(hcp).toFixed(2) : "0.00",
+      minoriDisabiliGravi: minoriDisabiliGravi ? parseFloat(minoriDisabiliGravi).toFixed(2) : "0.00",
+      nordOvest: nordOvest ? parseFloat(nordOvest).toFixed(2) : "0.00",
+      pnrr: pnrr ? parseFloat(pnrr).toFixed(2) : "0.00",
+      progettoSOD: progettoSOD ? parseFloat(progettoSOD).toFixed(2) : "0.00",
+      sudEst: sudEst ? parseFloat(sudEst).toFixed(2) : "0.00",
+      sudOvest: sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00",
+      ufficio: ufficio ? parseFloat(ufficio).toFixed(2) : "0.00",
+      viaTesso,
+      totaleOre: totaleOre.toFixed(2),
+    });
+
+    
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -338,23 +440,23 @@ function populateTable(data) {
       <td>${dataFormattata}</td>
       <td>${indirizzo}</td>
       <td>${codiceFiscale}</td>
-      <td>${assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : ""}</td>
-      <td>${anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : ""}</td>
-      <td>${anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : ""}</td>
-      <td>${contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : ""}</td>
-      <td>${disabile ? parseFloat(disabile).toFixed(2) : ""}</td>
-      <td>${distrettoNord ? parseFloat(distrettoNord).toFixed(2) : ""}</td>
-      <td>${distrettoSud ? parseFloat(distrettoSud).toFixed(2)  : ""}</td>
-      <td>${emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : ""}</td>
-      <td>${emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : ""}</td>
-      <td>${hcp ? parseFloat(hcp).toFixed(2) : ""}</td>
-      <td>${minoriDisabiliGravi ? parseFloat(minoriDisabiliGravi).toFixed(2) : ""}</td>
-      <td>${nordOvest ? parseFloat(nordOvest).toFixed(2) : ""}</td>
-      <td>${pnrr ? parseFloat(pnrr).toFixed(2) : ""}</td>
-      <td>${progettoSOD ? parseFloat(progettoSOD).toFixed(2) : ""}</td>
-      <td>${sudEst ? parseFloat(sudEst).toFixed(2) : ""}</td>
-      <td>${sudOvest ? parseFloat(sudOvest).toFixed(2) : ""}</td>
-      <td>${ufficio ? parseFloat(ufficio).toFixed(2) : ""}</td>
+      <td>${assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : "0.00"}</td>
+      <td>${anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : "0.00"}</td>
+      <td>${anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : "0.00"}</td>
+      <td>${contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00"}</td>
+      <td>${disabile ? parseFloat(disabile).toFixed(2) : "0.00"}</td>
+      <td>${distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00"}</td>
+      <td>${distrettoSud ? parseFloat(distrettoSud).toFixed(2)  : "0.00"}</td>
+      <td>${emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : "0.00"}</td>
+      <td>${emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : "0.00"}</td>
+      <td>${hcp ? parseFloat(hcp).toFixed(2) : "0.00"}</td>
+      <td>${minoriDisabiliGravi ? parseFloat(minoriDisabiliGravi).toFixed(2) : "0.00"}</td>
+      <td>${nordOvest ? parseFloat(nordOvest).toFixed(2) : "0.00"}</td>
+      <td>${pnrr ? parseFloat(pnrr).toFixed(2) : "0.00"}</td>
+      <td>${progettoSOD ? parseFloat(progettoSOD).toFixed(2) : "0.00"}</td>
+      <td>${sudEst ? parseFloat(sudEst).toFixed(2) : "0.00"}</td>
+      <td>${sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00"}</td>
+      <td>${ufficio ? parseFloat(ufficio).toFixed(2) : "0.00"}</td>
       <td>${totaleOre.toFixed(2)}</td>
     `;
     tableBody.appendChild(tr);
@@ -366,14 +468,23 @@ function populateTable(data) {
     totaleUtentiElement.textContent = 'Totale Utenti: ' + totaleUtenti
   }
 }
+/* FUNZIONI USATE PER GESTIONE POPOLAZIONE TABELLA */
+function excelDateToJSDate(serial) {
+  const utc_days = Math.floor(serial - 25569);
+  const utc_value = utc_days * 86400; 
+  const date_info = new Date(utc_value * 1000);
+  return date_info.toLocaleDateString("it-IT");
+}
+/*--- FINE ---*/
 
-// Filtro dati per Utente
-
+/* GESTIONI FILTRI DA APPLICARE */
 function applyFilters() {
   const utenteValue = document.getElementById("UtenteFilter").value;
   const searchValue = document.getElementById("searchInput").value.toLowerCase();
   const filterCheckboxadi = document.getElementById("filterCheckboxadi").checked;
   const filterCheckboxhcp = document.getElementById("filterCheckboxhcp").checked;
+  const tipoAnziano = document.getElementById("filtertipoAnziano").value;
+  const selectDistretto = document.getElementById("filterDistretto").value;
 
   const filtered = originalData.filter(row => {
   const matchesUtente = !utenteValue || row.Descrizione === utenteValue;
@@ -384,8 +495,51 @@ function applyFilters() {
 
   const colonnahcpValue = row["HCP"] || row["C - HCP"] || 0;
   const matchesCheckboxHCP = !filterCheckboxhcp || colonnahcpValue > 0;
-  
-  return matchesUtente && matchesSearch && matchesCheckbox && matchesCheckboxHCP;
+
+  // Filtro tipo anziano
+  let matchesTipoAnziano = true; // Default: passa il filtro
+  if (tipoAnziano === "autosufficiente") {
+    const valore = parseFloat(row["Anziano Autosufficiente"] || 0);
+          //console.log("Test Autosufficiente:", valore);
+
+    matchesTipoAnziano = valore > 0; // passa se > 0
+  } else if (tipoAnziano === "non_autosufficiente") {
+    const valore = parseFloat(row["Anziano Non Autosufficiente"] || 0);
+          //console.log("Test Non Autosufficiente:", valore);
+
+    matchesTipoAnziano = valore > 0; // passa se > 0
+  }
+
+  // Filtro tipo distretto
+  let matchesDitretto = true; // Default: passa il filtro
+  if (selectDistretto === "nord") {
+    const valore = parseFloat(row["Distretto Nord"] || 0);
+          //console.log("Test Autosufficiente:", valore);
+
+    matchesDitretto = valore > 0; // passa se > 0
+  } else if (selectDistretto === "nord_ovest") {
+    const valore = parseFloat(row["Nord Ovest"] || 0);
+          //console.log("Test Non Autosufficiente:", valore);
+
+    matchesDitretto = valore > 0; // passa se > 0
+  } else if (selectDistretto === "sud") {
+    const valore = parseFloat(row["Distretto Sud"] || 0);
+          //console.log("Test Non Autosufficiente:", valore);
+
+    matchesDitretto = valore > 0; // passa se > 0
+  } else if (selectDistretto === "sud_ovest") {
+    const valore = parseFloat(row["Sud Ovest"] || 0);
+          //console.log("Test Non Autosufficiente:", valore);
+
+    matchesDitretto = valore > 0; // passa se > 0
+  } else if (selectDistretto === "sud_est") {
+    const valore = parseFloat(row["Sud Est"] || 0);
+          //console.log("Test Non Autosufficiente:", valore);
+
+    matchesDitretto = valore > 0; // passa se > 0
+  }   
+    //console.log("Riga completa:", row);
+  return matchesUtente && matchesSearch && matchesCheckbox && matchesCheckboxHCP && matchesTipoAnziano && matchesDitretto;
   });
 
   populateTable(filtered);
@@ -401,62 +555,283 @@ function populateUtenteFilter() {
     option.textContent = ben;
     select.appendChild(option);
   });
+
+  const select_tipo_anziano = document.getElementById("filtertipoAnziano");
+  select_tipo_anziano.innerHTML = `
+  <option value="">Tutti</option>
+  <option value="autosufficiente">Autosufficiente</option>
+  <option value="non_autosufficiente">Non Autosufficiente</option>
+`;
+const select_distretto = document.getElementById("filterDistretto");
+select_distretto.innerHTML = `
+  <option value="">Tutti</option>
+  <option value="nord">Distretto NORD</option>
+  <option value="nord_ovest">Distretto NORD-OVEST</option>
+  <option value="sud">Distretto SUD</option>
+  <option value="sud_ovest">Distretto SUD-OVEST</option>
+  <option value="sud_est">Distretto SUD-EST</option>
+`;
 }
+/*--- FINE GESTIONE FILTRI DA APPLICARE ---*/
 
-function exportPDF() {
-  const { jsPDF } = window.jspdf;
 
-  // Crea il PDF in orizzontale
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'mm',
-    format: 'a4'
+
+
+
+
+
+
+
+
+/* ESPORTAZIONE IN FOMATO EXCEL */
+async function exportExcel() {
+  if (!visualizedData || visualizedData.length === 0) {
+    alert("Nessun dato da esportare!");
+    return;
+  }
+
+  // Ricavo il mese dal campo Data (YYYY-MM-DD)
+  let meseCompleto = "ND";
+  try {
+    meseCompleto = aggiornaUIconData(originalData); // la funzione che già usi
+    if (meseCompleto == undefined) meseCompleto = aggiornaMeseDaHeader(originalData);
+  } catch (e) {
+    console.warn("Impossibile ricavare mese, uso ND");
+  }
+
+  // Crea workbook
+  const workbook = new ExcelJS.Workbook();
+
+  // Crea il foglio per il distretto nord e sud
+  const nordWorksheet = workbook.addWorksheet("Distretto Nord");
+  const sudWorksheet = workbook.addWorksheet("Distretto Sud");
+
+  // Definisci le colonne per ogni tipo di fattura
+  let headers = [];
+  switch (tipoFattura) {
+    case 'anziani_non_autosufficenti':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo Intervento", "Ore Mensili", "Intervento", "Quantita", "Totale", "Apl", "Distretto"];
+      break;
+    case 'anziani_autosufficenti':
+      headers = ["Descrizione", "Data di Nascita", "Assistenza Domiciliare", "Anziano Autosufficiente", "Distretto"];
+      break;
+    case 'disabili':
+      headers = ["Descrizione", "Data di Nascita", "Disabilità", "Assistenza Domiciliare", "Distretto"];
+      break;
+    case 'minori_disabili_gravi':
+      headers = ["Descrizione", "Data di Nascita", "Minori Disabili Gravi", "Assistenza", "Distretto"];
+      break;
+    case 'emergenza_caldo':
+      headers = ["Descrizione", "Data di Nascita", "Emergenza Caldo", "Assistenza", "Distretto"];
+      break;
+    default:
+      headers = ["Descrizione", "Data di Nascita", "Indirizzo", "Codice Fiscale", "Distretto"];
+      break;
+  }
+
+  // Aggiungi la riga per il mese (e il distretto) per entrambi i fogli
+  const rowMeseNord = nordWorksheet.addRow([`Mese: ${meseCompleto}`]);
+  nordWorksheet.mergeCells(1, 1, 1, headers.length); // Unisci le celle per il mese
+  rowMeseNord.height = 30;
+  rowMeseNord.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFF00" } };
+    cell.font = { bold: true, color: { argb: "000000" }, size: 20 };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
   });
 
-  // Titolo del report
-  doc.setFontSize(14);
-  doc.text("Report Fatturazione", 14, 10);
-
-  // Genera la tabella da HTML
-  doc.autoTable({
-    html: '#mainTable',       // id della tabella
-    startY: 20,
-    styles: {
-      fontSize: 7,
-      cellPadding: 2,
-      overflow: 'linebreak', // testo lungo va a capo
-      valign: 'middle',
-      halign: 'center'
-    },
-    headStyles: {
-      fillColor: [33, 37, 41], // header scuro
-      textColor: 255,
-      fontStyle: 'bold',
-      halign: 'center'
-    },
-    showHead: 'everyPage', // header ripetuto su ogni pagina
-    bodyStyles: {
-      halign: 'center',
-      valign: 'middle'
-    },
-    columnStyles: {
-      0: { cellWidth: 30 }, // UTENTE
-      1: { cellWidth: 25 }, // DATA DI NASCITA
-      2: { cellWidth: 40 }, // INDIRIZZO
-      3: { cellWidth: 30 }  // CODICE FISCALE
-      // altre colonne auto
-    },
-    tableWidth: 'auto',
-    showHead: 'everyPage', // ✅ header ripetuto su ogni pagina
-    margin: { top: 20 }    // spazio per il titolo
+  nordWorksheet.addRow(headers);
+  const headerRowNord = nordWorksheet.getRow(2);
+  headerRowNord.eachCell((cell, colNumber) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
+    cell.font = { bold: true, color: { argb: "000000" } };
+    
+    // Centra solo le colonne dalla seconda in poi (indice 2)
+    if (colNumber > 1) {
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    }
   });
 
-  // Salva PDF
-  doc.save("fatturazione.pdf");
+  const rowMeseSud = sudWorksheet.addRow([`Mese: ${meseCompleto}`]);
+  sudWorksheet.mergeCells(1, 1, 1, headers.length); // Unisci le celle per il mese
+  rowMeseSud.height = 30;
+  rowMeseSud.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFF00" } };
+    cell.font = { bold: true, color: { argb: "000000" }, size: 20 };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  });
+
+  sudWorksheet.addRow(headers);
+  const headerRowSud = sudWorksheet.getRow(2);
+  headerRowSud.eachCell((cell, colNumber) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
+    cell.font = { bold: true, color: { argb: "000000" } };
+    
+    // Centra solo le colonne dalla seconda in poi (indice 2)
+    if (colNumber > 1) {
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    }
+  });
+
+  // --- Inserisci i dati per il Distretto Nord e Sud --- 
+  visualizedData.forEach(row => {
+    let dataRow = [];
+    const distrettoNord = row.distrettoNord || "0.00";
+    const distrettoSud = row.distrettoSud || "0.00";
+    const nordOvest = row.nordOvest || "0.00";
+    const sudEst = row.sudEst || "0.00";
+    const sudOvest = row.sudOvest || "0.00";
+
+    // Aggiungere "Anziani non autosufficenti" per il tipo di fattura "anziani_non_autosufficenti"
+    const tipoUtenza = tipoFattura === 'anziani_non_autosufficenti' ? 'Anziani non Autosufficenti' : '';
+
+    // Verifica a quale distretto appartiene la riga
+    const isNord = distrettoNord !== "0.00" || nordOvest !== "0.00"; // Include il Nord se uno dei distretti Nord è valorizzato
+    const isSud = distrettoSud !== "0.00" || sudEst !== "0.00" || sudOvest !== "0.00"; // Include il Sud se uno dei distretti Sud è valorizzato
+    
+    let print_distretto = "";  // Variabile per il nome del distretto
+
+    // Se il distretto è legato a Nord
+    if (isNord) {
+      if (distrettoNord > 0) {
+        print_distretto = "   Nord";  // Assegna il nome del distretto
+      } else if (nordOvest > 0) {
+        print_distretto = "Nord Ovest";  // Assegna il nome del distretto Nord Ovest
+      }
+    }
+
+    // Se il distretto è legato a Sud
+    else if (isSud) {
+      if (distrettoSud > 0) {
+        print_distretto = "Sud";  // Assegna il nome del distretto Sud
+      } else if (sudEst > 0) {
+        print_distretto = "Sud Est";  // Assegna il nome del distretto Sud Est
+      } else if (sudOvest > 0) {
+        print_distretto = "Sud Ovest";  // Assegna il nome del distretto Sud Ovest
+      }
+    }
+
+    // Definisci la riga di dati in base al tipo di fattura
+    switch (tipoFattura) {
+      case 'anziani_non_autosufficenti':
+        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, row.tipoIntervento, row.oreMensili, row.intervento, row.quantita, row.totale, row.apl, print_distretto];
+        break;
+      case 'anziani_autosufficenti':
+        dataRow = [row.descrizione, row.dataNascita, row.assistenzaDomiciliare, row.anianoAutosuficente, print_distretto];
+        break;
+      case 'disabili':
+        dataRow = [row.descrizione, row.dataNascita, row.disabile, row.assistenzaDomiciliareIntegrata, print_distretto];
+        break;
+      case 'minori_disabili_gravi':
+        dataRow = [row.descrizione, row.dataNascita, row.minoriDisabiliGravi, row.hcp, print_distretto];
+        break;
+      case 'emergenza_caldo':
+        dataRow = [row.descrizione, row.dataNascita, row.emergenzaCaldoASL, row.emergenzaCaldoComune, print_distretto];
+        break;
+      default:
+        dataRow = [row.descrizione, row.dataNascita, row.indirizzo, row.codiceFiscale, print_distretto];
+        break;
+    }
+
+    // Aggiungi i dati al foglio appropriato (Nord o Sud)
+    if (isNord) {
+      const row = nordWorksheet.addRow(dataRow);
+      row.eachCell((cell, colNumber) => {
+        // Centra solo le colonne dalla seconda in poi (indice 2)
+        if (colNumber > 1) {
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+        }
+      });
+    } else if (isSud) {
+      const row = sudWorksheet.addRow(dataRow);
+      row.eachCell((cell, colNumber) => {
+        // Centra solo le colonne dalla seconda in poi (indice 2)
+        if (colNumber > 1) {
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+        }
+      });
+    }
+  });
+
+  // --- Larghezza delle colonne ---
+  nordWorksheet.columns = headers.map(h => {
+    if (h.toLowerCase().includes("nome") || h.toLowerCase().includes("descrizione")) {
+      return { key: h, width: 50 };
+    } else if (h.toLowerCase().includes("indirizzo") || h.toLowerCase().includes("codice fiscale")) {
+      return { key: h, width: 50 };
+    } else {
+      return { key: h, width: 25 };
+    }
+  });
+
+  sudWorksheet.columns = nordWorksheet.columns;
+
+  // --- Esportazione ---
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `fatturazione_${meseCompleto}.xlsx`;
+  link.click();
 }
 
-function exportExcel() {
-  const table = document.getElementById("dataTable");
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Fatturazione" });
-  XLSX.writeFile(wb, "fatturazione.xlsx");
+
+
+/*--- FINE ---*/
+
+
+
+
+
+
+
+
+
+
+  function showMeaning(text) {
+  alert(text);
 }
+
+function resetData() {
+  if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
+    localStorage.removeItem("fatturazioneData");
+    originalData = [];
+    populateUtenteFilter();
+    applyFilters();
+  }
+}
+// SERVER A SALVARE I DATI IN LOCALE
+function saveData() {
+  localStorage.setItem("fatturazioneData", JSON.stringify(originalData));
+}
+
+let tipoFattura = ''; // Variabile globale che tiene traccia del tipo di fattura selezionato
+function setFattura(tipo) {
+  tipoFattura = tipo;  // Imposta il tipo di fattura in base al bottone cliccato
+
+  // Aggiorna la descrizione in base al tipo di fattura selezionato
+  let description = '';
+  switch (tipo) {
+    case 'anziani_non_autosufficenti':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'anziani_autosufficenti':
+      description = '<strong>Questa fattura includerà:</strong><br> Tutti i distretti';
+      break;
+    case 'disabili':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'minori_disabili_gravi':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'emergenza_caldo':
+      description = '<strong>Fattura con Sconto:</strong><br>Includerà: Nome, Data, Importo, Sconto Applicato, Totale dopo Sconto.';
+      break; 
+    default:
+      description = 'Seleziona un tipo di fattura per vedere i parametri.';
+  }
+
+  // Aggiorna la sezione della descrizione
+  document.getElementById('fattura-description').innerHTML = description;
+}
+
+
