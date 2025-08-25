@@ -13,145 +13,164 @@
   <!-- HEADER -->
   <header class="app-header shadow-sm p-3 mb-4 bg-primary text-white d-flex align-items-center">
     <div class="logo me-3"><img src="{% static 'Assets/collaborative.png'%}"></img></div>
-    <h1 class="m-0 fs-3" style="cursor:pointer" onclick="showPage('upload')">Fatturazione Smart</h1>
+    <h1 class="m-0 fs-3" style="cursor:pointer" onclick="setActive(this,'upload')">Fatturazione Smart</h1>
   </header>
   <!-- MENU DI NAVIGAZIONE -->
   <nav class="mb-4 d-flex justify-content-center gap-2">
-    <button class="btn btn-outline-light nav-btn" onclick="showPage('upload')">📂 Upload</button>
-    <button class="btn btn-outline-light nav-btn" onclick="showPage('dati')">📊 Visualizza Dati</button>
-    <button class="btn btn-outline-light nav-btn" onclick="showPage('fatture')">🧾 Genera Fatture</button>
+    <button class="btn btn-outline-light nav-btn" onclick="setActive(this,'upload')">📂 Upload</button>
+    <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'dati')">📊 Visualizza Dati</button>
+    <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'fatture')">🧾 Genera Fatture</button>
   </nav>
 
   <main class="container-fluid px-5">
 
     <!-- SEZIONE UPLOAD -->
-    <div id="upload" class="page ">
-      <h2>Carica File CSV</h2>
-      <div id="drop-area" class="border border-2 border-primary rounded p-5 text-center mb-3 bg-light" style="cursor:pointer;">
-        <div id="drop-message" class="text-secondary">
-          Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>
+      <div id="upload" class="page">
+
+          <!-- OSS -->
+        <div class="mb-4">
+          <h2>Carica File CSV OSS</h2>
+          <div class="border border-2 border-primary rounded p-5 text-center bg-light" style="cursor:pointer;">
+            <div class="text-secondary">Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span></div>
+            <input type="file" id="fileInput-oss" class="form-control d-none">
+          </div>
+          <button class="btn btn-primary mt-2" onclick="loadFile('oss')">Carica</button>
+          <p class="mt-2 text-muted">Inserisci file OSS</p>
         </div>
-        <input type="file" id="fileInput" class="form-control d-none">
+
+        <!-- UMANA -->
+        <div class="mb-4">
+          <h2>Carica File CSV Umana</h2>
+          <div class="border border-2 border-primary rounded p-5 text-center bg-light" style="cursor:pointer;">
+            <div class="text-secondary">Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span></div>
+            <input type="file" id="fileInput-umana" class="form-control d-none">
+          </div>
+          <button class="btn btn-primary mt-2" onclick="loadFile('umana')">Carica</button>
+          <p class="mt-2 text-muted">Inserisci file Umana</p>
+        </div>
+
+        <!-- SINERGY -->
+        <div class="mb-4">
+          <h2>Carica File CSV Sinergy</h2>
+          <div class="border border-2 border-primary rounded p-5 text-center bg-light" style="cursor:pointer;">
+            <div class="text-secondary">Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span></div>
+            <input type="file" id="fileInput-sinergy" class="form-control d-none">
+          </div>
+          <button class="btn btn-primary mt-2" onclick="loadFile('sinergy')">Carica</button>
+          <p class="mt-2 text-muted">Inserisci file Sinergy</p>
+        </div>
+
+        <!-- G GROUP -->
+        <div class="mb-4">
+          <h2>Carica File CSV G Group</h2>
+          <div class="border border-2 border-primary rounded p-5 text-center bg-light" style="cursor:pointer;">
+            <div class="text-secondary">Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span></div>
+            <input type="file" id="fileInput-ggroup" class="form-control d-none">
+          </div>
+          <button class="btn btn-primary mt-2" onclick="loadFile('ggroup')">Carica</button>
+          <p class="mt-2 text-muted">Inserisci file G Group</p>
+        </div>
+
+      
+
       </div>
-      <button class="btn btn-primary" onclick="loadFile()">Carica</button>
-      <p class="mt-3 text-muted">Formato richiesto: Descrizione, Bday, Indirizzo</p>
-    </div>
+
 
     <!-- SEZIONE DATI -->
-    <div id="dati" class="page">
-      <h2 id="labelAnteprimaDati">Anteprima Dati</h2>
-      
-      <!-- FILTRI -->
-      <div class="mb-3">
-        <div class="d-flex align-items-center gap-4 flex-wrap">
-          <div class="d-flex align-items-center gap-2">
-            <label class="ms-2 mb-0">Cerca:</label>
-            <input type="text" id="searchInput" class="form-control" placeholder="Cerca..." style="width:180px" oninput="applyFilters()">
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <label class="mb-0">Filtra per Utente:</label>
-            <select id="UtenteFilter" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
-              <option value="">Tutti</option>
-            </select>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <label class="mb-0">Filtra per Tipo Anziano:</label>
-            <select id="filtertipoAnziano" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
-              <option value="">Tutti</option>
-            </select>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <label class="mb-0">Filtra per Distretto:</label>
-            <select id="filterDistretto" class="form-select mb-0" style="width:auto;" onchange="applyFilters()">
-              <option value="">Tutti</option>
-            </select>
-          </div>
-          
-
-          <div class="d-flex align-items-center gap-2">
-            <input type="checkbox" id="filterCheckboxadi" class="form-check-input m-0" onchange="applyFilters()">
-            <label for="filterCheckbox" class="mb-0">C-ADI</label>
-          </div>
-
-           <div class="d-flex align-items-center gap-2">
-            <input type="checkbox" id="filterCheckboxhcp" class="form-check-input m-0" onchange="applyFilters()">
-            <label for="filterCheckbox" class="mb-0">C-HCP</label>
-          </div>
-          
-           <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-light" id="resetbtn" onclick="resetData()">Reset Dati</button>
-          </div>
-          <!-- Qui puoi aggiungere altri filtri in futuro, ad esempio: -->
-          <!--
-          <div class="d-flex align-items-center gap-2">
-            <label class="mb-0">Altro filtro:</label>
-            <select class="form-select mb-0" style="width:auto;">
-              <option value="">Tutti</option>
-            </select>
-          </div>
-          -->
+  <div id="dati" class="page active">
+      <div class="d-flex" style="height:100vh;">  
+      <!-- Sidebar Filtri -->
+      <aside class="bg-light border-end p-3" style="width:280px;">
+        <h5 class="mb-3"><i class="bi bi-funnel"></i> Filtri</h5>
+        <!-- Ricerca -->
+        <div class="mb-3">
+          <label class="form-label">Cerca:</label>
+          <input type="text" class="form-control" id="searchInput" placeholder="Cerca..." oninput="applyFilters()">
         </div>
-      </div>
+        <!-- Filtri Select -->
+        <div class="mb-3">
+          <label class="form-label">Utente:</label>
+          <select id="UtenteFilter" class="form-select" onchange="applyFilters()">
+            <option value="">Tutti</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tipo Anziano:</label>
+          <select id="filtertipoAnziano" class="form-select" onchange="applyFilters()">
+            <option value="">Tutti</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Distretto:</label>
+          <select id="filterDistretto" class="form-select" onchange="applyFilters()">
+            <option value="">Tutti</option>
+          </select>
+        </div>
+        <!-- Checkbox -->
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="filterCheckboxadi" onchange="applyFilters()">
+          <label class="form-check-label" for="filterCheckboxadi">C-ADI</label>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="filterCheckboxhcp" onchange="applyFilters()">
+          <label class="form-check-label" for="filterCheckboxhcp">C-HCP</label>
+        </div>
+      </aside>
 
-      <strong><p id="totaleUtenti"></p></strong>
+      <!-- Main Content -->
+      <main class="flex-column">
+        <!-- Top Bar -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 id ="labelAnteprimaDati" class="fw-bold">Anteprima Dati</h2><br>
+          <h6 id ="totaleUtenti" class="fw-bold"></h6>
+          <div>
+            <button class="btn btn-outline-danger" onclick="resetData()">
+              <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+          </div>
+        </div>
 
-      <!-- CREAZIONE TABELLA -->
-      <div class="table-wrapper">
-  <div class="table-scroll">
-    <table id="mainTable" class="table table-bordered table-hover table-rounded">
-      <thead class="table-dark">
-        <tr>
-          <th class="text-center">UTENTE</th>
-          <th class="text-center">DATA DI NASCITA</th>
-          <th class="text-center">INDIRIZZO</th>
-          <th class="text-center">CODICE FISCALE</th>
-          <th class="text-center">
-              <div style="display: flex; align-items: center; gap: 5px;">
-                C - ADI 
-                <img src="{% static 'Assets/question-mark.png' %}" 
-                    alt="info" 
-                    style="width:18px; height:18px; cursor:pointer;" 
-              onclick="showMeaning('C - ADI significa: \nAssistenza Domiciliare Integrata. Si riferisce ai servizi di assistenza domiciliare per persone anziane o disabili che necessitano di supporto nelle attività quotidiane.')">
-              </div>
-            </th>
-          <th class="text-center">C - Anziano autosufficiente</th>
-          <th class="text-center">C - Anziano non autosufficiente</th>
-          <th class="text-center">C - Contratti privati</th>
-          <th class="text-center">C - Disabile</th>
-          <th class="text-center">C - DISTRETTO NORD</th>
-          <th class="text-center">C - DISTRETTO SUD</th>
-          <th class="text-center">C - EMERGENZA CALDO ASL</th>
-          <th class="text-center">C - EMERGENZA CALDO COMUNE</th>
-          <th class="text-center">
-              <div style="display: flex; align-items: center; gap: 5px;">
-                C - HCP
-                <img src="{% static 'Assets/question-mark.png' %}" 
-                    alt="info" 
-                    style="width:18px; height:18px; cursor:pointer;" 
-                    onclick="showMeaning('C - HCP significa: \nHome Care Package. Si riferisce a un pacchetto di servizi di assistenza domiciliare personalizzati per persone con bisogni complessi.')">
-              </div>
-            </th>
-          <th class="text-center">C - Minori Disabili Gravi</th>
-          <th class="text-center">C - Nord Ovest</th>
-          <th class="text-center">C - PNRR</th>
-          <th class="text-center">C - Progetto SOD</th>
-          <th class="text-center">C - Sud-Est</th>
-          <th class="text-center">C - Sud-Ovest</th>
-          <th class="text-center">C - UFFICIO VIA TESSO</th>
-          <th class="text-center">TOTALE ORE MESE</th>
-        </tr>
-      </thead>
-      <tbody id="dataTable">
-        <tr><td colspan="22" class="text-center">Nessun dato caricato</td></tr>
-      </tbody>
-    </table>
+          <!-- Tabella scrollabile -->
+          <div class="table-wrapper flex-grow-1" style="overflow:auto;">
+            <table id="mainTable" class="table table-bordered table-hover table-rounded">
+              <thead class="table-dark">
+                <tr>
+                  <th class="text-center">UTENTE</th>
+                  <th class="text-center">DATA DI NASCITA</th>
+                  <th class="text-center">INDIRIZZO</th>
+                  <th class="text-center">CODICE FISCALE</th>
+                  <th class="text-center">C - ADI</th>
+                  <th class="text-center">C - Anziano autosufficiente</th>
+                  <th class="text-center">C - Anziano non autosufficiente</th>
+                  <th class="text-center">C - Contratti privati</th>
+                  <th class="text-center">C - Disabile</th>
+                  <th class="text-center">C - DISTRETTO NORD</th>
+                  <th class="text-center">C - DISTRETTO SUD</th>
+                  <th class="text-center">C - EMERGENZA CALDO ASL</th>
+                  <th class="text-center">C - EMERGENZA CALDO COMUNE</th>
+                  <th class="text-center">C - HCP</th>
+                  <th class="text-center">C - Minori Disabili Gravi</th>
+                  <th class="text-center">C - Nord Ovest</th>
+                  <th class="text-center">C - PNRR</th>
+                  <th class="text-center">C - Progetto SOD</th>
+                  <th class="text-center">C - Sud-Est</th>
+                  <th class="text-center">C - Sud-Ovest</th>
+                  <th class="text-center">C - UFFICIO VIA TESSO</th>
+                  <th class="text-center">TOTALE ORE MESE</th>
+                </tr>
+              </thead>
+              <tbody id="dataTable">
+                <tr><td colspan="22" class="text-center">Nessun dato caricato</td></tr>
+              </tbody>
+            </table>
   </div>
-</div>
-      
+        <button class="btn btn-primary mt-3"><i class="bi bi-plus-circle"></i> Aggiungi Dato</button>
+      </main>
     </div>
+  </div>
 
     <!-- SEZIONE FATTURE -->
-      <div id="fatture" class="page active">
+      <div id="fatture" class="page">
     <h2>Genera Fattura:</h2>
 
     <!-- Selezione tipo fattura -->
@@ -159,7 +178,7 @@
       <button class="btn btn-info " onclick="setFattura('anziani_non_autosufficenti')">Anziani non Autosufficenti</button>
       <button class="btn btn-info" onclick="setFattura('anziani_autosufficenti')">Anziani Autosufficenti</button>
       <button class="btn btn-info" onclick="setFattura('disabili')">Disabili</button>
-      <button class="btn btn-info" onclick="setFattura('minori_disabili_gravi')">Minori disabili gravi</button>
+      <button class="btn btn-info" onclick="setFattura('minori_disabil  i_gravi')">Minori disabili gravi</button>
       <button class="btn btn-info" onclick="setFattura('emergenza_caldo')">Emergenza caldo</button>
 
     </div>
@@ -182,3 +201,4 @@
   <script src="{% static 'script.js' %}"></script>
 </body>
 </html>
+	

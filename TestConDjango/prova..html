@@ -1,73 +1,101 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizza Excel in Tabella</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        input {
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup Example</title>
+  <style>
+    /* Stile per il popup (nascosto di default) */
+    .popup {
+      display: none; /* nascosto */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5); /* sfondo scuro trasparente */
+    }
+
+    /* Contenuto del popup */
+    .popup-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 50%;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* Bottone per chiudere */
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    /* Stile del bottone principale */
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #007BFF;
+      color: #fff;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-    <h1>Carica un file Excel</h1>
-    <input type="file" id="fileInput" accept=".xlsx, .xls">
-    <table id="excelTable"></table>
 
-    <!-- Libreria SheetJS -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const excelTable = document.getElementById('excelTable');
+  <!-- Bottone per aprire il popup -->
+  <button id="openPopup">Apri Popup</button>
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+  <!-- Il popup -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <span id="closePopup" class="close">&times;</span>
+      <h2>Questo è un popup!</h2>
+      <p>Puoi inserire qui qualsiasi contenuto.</p>
+    </div>
+  </div>
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
+  <script>
+    // Seleziono gli elementi
+    const openBtn = document.getElementById("openPopup");
+    const closeBtn = document.getElementById("closePopup");
+    const popup = document.getElementById("popup");
 
-                // Prendiamo il primo foglio
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
+    // Aprire il popup
+    openBtn.addEventListener("click", () => {
+      popup.style.display = "block";
+    });
 
-                // Convertiamo il foglio in JSON
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    // Chiudere il popup
+    closeBtn.addEventListener("click", () => {
+      popup.style.display = "none";
+    });
 
-                // Creiamo la tabella
-                excelTable.innerHTML = '';
-                jsonData.forEach((row, rowIndex) => {
-                    const tr = document.createElement('tr');
-                    row.forEach(cell => {
-                        const cellElement = rowIndex === 0 ? document.createElement('th') : document.createElement('td');
-                        cellElement.textContent = cell;
-                        tr.appendChild(cellElement);
-                    });
-                    excelTable.appendChild(tr);
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        });
-    </script>
+    // Chiudere cliccando fuori dal contenuto
+    window.addEventListener("click", (e) => {
+      if (e.target === popup) {
+        popup.style.display = "none";
+      }
+    });
+  </script>
+
 </body>
 </html>

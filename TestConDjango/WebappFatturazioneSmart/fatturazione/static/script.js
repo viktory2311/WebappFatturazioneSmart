@@ -1,11 +1,20 @@
 let originalData = [];
 
-/* FUNZIONE PER SCEGLIERE LA CORRETTA PAGINA DA MOSTRARE*/
+/* FUNZIONE PER SCEGLIERE LA CORRETTA PAGINA DA MOSTRARE */
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
 }
-/*--- FINE ---*/
+
+//Gestione navigazione tra pagine
+function setActive(button, page) {
+    // Rimuove active da tutti i pulsanti
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    // Aggiunge active al pulsante cliccato
+    button.classList.add('active');
+    // Mostra la pagina selezionata
+    showPage(page);
+}
 
 
 /* GESTIONE CARICAMENTO DATI INIZIALI */
@@ -75,49 +84,59 @@ window.onload = () => {
                             })
             .catch(err => console.error("Errore caricamento utenti:", err));
             // ------------------------------------------
+            // Setup per tutti i drop area
+            setupDropArea('fileInput-oss', 'oss');
+            setupDropArea('fileInput-umana', 'umana');
+            setupDropArea('fileInput-sinergy', 'sinergy');
+            setupDropArea('fileInput-ggroup', 'ggroup');
 
-          // Elementi DOM
-          const dropArea = document.getElementById('drop-area');
-          const fileInput = document.getElementById('fileInput');
-          const dropMessage = document.getElementById('drop-message');
+}
+function setupDropArea(fileInputId, source) {
+    const dropArea = document.getElementById(fileInputId).parentElement;
+    const fileInput = document.getElementById(fileInputId);
+    const dropMessage = dropArea.querySelector('div');
 
-          // Evidenzia area quando si trascina sopra
-          ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              dropArea.classList.add('bg-primary', 'text-white');
-              dropMessage.textContent = "Rilascia il file qui!";
-            });
-          });
-
-          // Rimuovi evidenziazione quando si esce
-          ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              dropArea.classList.remove('bg-primary', 'text-white');
-              dropMessage.innerHTML = 'Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>';
-            });
-          });
-
-          // Gestisci il drop
-          dropArea.addEventListener('drop', (e) => {
+    // Evidenziazione drag
+    ['dragenter','dragover'].forEach(evt => {
+        dropArea.addEventListener(evt, e => {
             e.preventDefault();
             e.stopPropagation();
-            if (e.dataTransfer.files.length) {
-              fileInput.files = e.dataTransfer.files;
-              loadFile(); // Avvia subito la lettura del file
-            }
-          });
+            dropArea.classList.add('bg-primary', 'text-white');
+        });
+    });
 
-          // Permetti click per aprire il file picker
-          dropArea.addEventListener('click', () => fileInput.click());
+    ['dragleave','drop'].forEach(evt => {
+        dropArea.addEventListener(evt, e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropArea.classList.remove('bg-primary', 'text-white');
+        });
+    });
 
-          // Avvia caricamento quando viene selezionato un file
-          fileInput.addEventListener('change', loadFile);
-    
-  };
+    // Drop file
+    dropArea.addEventListener('drop', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateDropMessage(fileInput, dropMessage); // mostra nome file
+            const conferma = confirm(`Vuoi caricare il file "${fileInput.files[0].name}"?`);
+            if (conferma) loadFile(source);
+        }
+    });
+
+    // Click per aprire file picker
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    // Selezione manuale
+    fileInput.addEventListener('change', () => {
+        updateDropMessage(fileInput, dropMessage);
+        const conferma = confirm(`Vuoi caricare il file "${fileInput.files[0].name}"?`);
+        if (conferma) loadFile(source);
+    });
+}
+
+
 /* FUNZIONI UTILIZZATE PER GESTIRE IL CARICAMENTO INIZIALE */
 function formatDateIfValid(dateString) {
   if (!dateString) return "--";              // niente data => placeholder
@@ -125,13 +144,30 @@ function formatDateIfValid(dateString) {
   if (isNaN(d)) return "--";                  // data non valida => placeholder
   return d.toLocaleDateString("en-EN");      // data valida => formato ITA
 }
+function updateDropMessage(fileInput, dropMessage) {
+  if (fileInput.files.length > 0) {
+    dropMessage.textContent = `File selezionato: ${fileInput.files[0].name}`;
+  } else {
+    dropMessage.innerHTML = 'Trascina qui il file CSV/XLSX oppure <span class="text-primary fw-bold">clicca per selezionare</span>';
+  }
+}
 /*--- FINE ---*/
 
 
 
 /* GESTIONE CARICAMENTO FILE EXCEL */
-function loadFile() {
-  const fileInput = document.getElementById("fileInput");
+function loadFile(source) {
+  if (!source) {
+    alert("Errore: tipo file non specificato");
+    return;
+  }
+
+  const fileInput = document.getElementById(`fileInput-${source}`);
+  if (!fileInput) {
+    alert("Errore: input file non trovato per " + source);
+    return;
+  }
+
   const file = fileInput.files[0];
   if (!file) {
     alert("Seleziona un file CSV o XLSX prima di procedere.");
@@ -140,28 +176,13 @@ function loadFile() {
 
   const reader = new FileReader();
 
-    // LA FUNZIONE Papa.parse è utilizzata per leggere il file CSV
-  // e popolare la tabella con i dati.
-  // Assicurati di avere la libreria PapaParse inclusa nel tuo progetto
-  // ed è asincrona, quindi non blocca l'interfaccia utente durante il caricamento.
-
   if (file.name.toLowerCase().endsWith(".csv")) {
     reader.onload = function(e) {
       Papa.parse(e.target.result, {
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-          originalData = results.data;
-          // ordina subito
-                originalData.sort((a, b) => {
-                  const nomeA = (a.Descrizione || "").trim();
-                  const nomeB = (b.Descrizione || "").trim();
-                  return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" }); // Confronta le stringhe in modo non case-insensitive quindi B == b e viene ordinato in modo corretto
-                });
-          //saveData();
-          populateUtenteFilter();
-          applyFilters();
-          showPage('dati');
+          processData(results.data, source);
         }
       });
     };
@@ -173,45 +194,8 @@ function loadFile() {
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(sheet, {range: 1}); // Salta la prima riga
-
-     // const headerRow = jsonData[0];
-     // console.log("Header intero:", headerRow);
-
-     //const intestazione = jsonData[0][18];
-     //console.log("Intestazione colonna:", intestazione);
-     
-      originalData = jsonData; // già con header → oggetti
-      aggiornaMeseDaHeader(originalData);
-      
-      if (originalData && originalData.length > 1) {
-  // Estraggo tutte le righe tranne l'ultima
-  const righeDaOrdinare = originalData.slice(0, -1); // tutte tranne l'ultima
-
-  // Ordino
-  righeDaOrdinare.sort((a, b) => {
-    const nomeA = (a.Descrizione || "").trim();
-    const nomeB = (b.Descrizione || "").trim();
-    return nomeA.localeCompare(nomeB, "it", { sensitivity: "base" });
-  });
-
-  // Ricompongo originalData con l'ultima riga (totale) in fondo
-  originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
-  console.log("Dati ordinati:", originalData);
-}
-
-          //console.log(originalData.map(r => r.Descrizione));
-      //saveData();
-      fetch("/salva/", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(originalData)
-      })
-      .then(res => res.json())
-      .then(data => console.log("Dati salvati:", data));      
-      populateUtenteFilter();
-      applyFilters();
-      showPage('dati');
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 }); // Salta header
+      processData(jsonData, source);
     };
     reader.readAsArrayBuffer(file);
   } 
@@ -220,6 +204,49 @@ function loadFile() {
   }
 }
 /*--- FINE ---*/
+
+// Funzione che processa i dati a seconda della fonte
+function processData(data, source) {
+  if (source === "oss") {
+    // OSS → comportamento originale
+    ossData = data;
+    aggiornaMeseDaHeader(ossData);
+
+    if (ossData.length > 1) {
+      const righeDaOrdinare = ossData.slice(0, -1);
+      righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+      ossData = [...righeDaOrdinare, ossData[ossData.length-1]];
+    }
+
+    fetch("/salva/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(ossData)
+    }).then(res => res.json()).then(data => console.log("Dati OSS salvati:", data));
+
+    populateUtenteFilter();
+    applyFilters();
+      // Chiedi conferma prima di aprire la pagina dati
+    const conferma = confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?");
+    if (conferma) {
+      showPage('dati');
+    }
+  } else {
+    // Altri file → aggiungi a allData
+    const dataWithSource = data.map(row => ({ ...row, Fonte: source }));
+    allData = [...allData, ...dataWithSource];
+
+    // Ordina per Descrizione
+    allData.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+
+    populateUtenteFilter();
+    applyFilters();
+    const conferma = confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`);
+    if (conferma) {
+      showPage('dati');
+    }
+  }
+}
 
 /* GESTIONE VISUALIZZAZIONE MESE CORRENTE GESTITO FRONTEND*/
 function aggiornaMeseDaHeader(data) {
@@ -326,7 +353,7 @@ function aggiornaUIconData(data) {
 
   const meseCompleto = mesiMap[mese] || mese;
   // aggiorna UI
-  document.getElementById("labelAnteprimaDati").textContent =
+    document.getElementById("labelAnteprimaDati").textContent =
     `Anteprima Dati - Mese: ${meseCompleto}`;
 
   const ths = document.querySelectorAll("#mainTable thead th");
@@ -793,11 +820,24 @@ async function exportExcel() {
 
 function resetData() {
   if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
-    localStorage.removeItem("fatturazioneData");
-    originalData = [];
-    populateUtenteFilter();
-    applyFilters();
-  }
+    fetch("reset/", { method: "POST", headers: {"Content-Type": "application/json"} })
+    .then(response => response.json())
+    .then(data => {
+      if(data.Status === "ok"){
+          alert("Dati resettati con successo.");
+      originalData = [];
+      populateUtenteFilter();
+      applyFilters();
+      }else{
+        alert("Errore nel res i dati.");
+      }
+    
+  })
+  .catch(error => {
+    console.error("Errore nel resettare i dati:", error);
+    alert("Errore nel resett i dati.");
+  })
+}
 }
 // SERVER A SALVARE I DATI IN LOCALE
 function saveData() {
@@ -833,5 +873,3 @@ function setFattura(tipo) {
   // Aggiorna la sezione della descrizione
   document.getElementById('fattura-description').innerHTML = description;
 }
-
-

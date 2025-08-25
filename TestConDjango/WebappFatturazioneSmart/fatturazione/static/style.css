@@ -6,6 +6,14 @@ body {
   font-size: 1.8rem;
 }
 /*CSS per NavBar e bottoni iniziali*/
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
     .p-0 {
         font-family: 'poppins', sans-serif;
         background-color: #eafbe7; /* verde pastello */
@@ -24,6 +32,12 @@ body {
         background-color: #b2ff59 !important; /* lime chiaro */
         color: #00c853 !important;
     }
+    .nav-btn.active {
+    background-color: #b2ff59 !important; /* lime chiaro per attivo */
+    color: #00c853 !important;
+    font-weight: bold;
+}
+
 #resetbtn{
   background-color: #c40000 !important; /* smeraldo */
         color: #fff !important;
@@ -46,55 +60,71 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/*STILE TABELLA*/
-th {
-  vertical-align: middle;
+/* Wrapper principale dati */
+#dati > .d-flex {
+  height: 100vh;            /* tutta l’altezza della finestra */
+  overflow: hidden;          /* evita scroll fuori dalla finestra */
 }
+
+/* Sidebar fissa */
+aside {
+  width: 280px;
+  height: 100%;
+  overflow-y: auto;          /* scroll se tanti filtri */
+  flex-shrink: 0;
+  padding: 1rem;
+}
+
+/* Main verticale */
+main.flex-column {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;             /* occupa spazio rimanente accanto alla sidebar */
+  padding: 1rem;
+  overflow: hidden;         /* gestisce scroll internamente */
+}
+
+/* Tabella scrollabile */
 .table-wrapper {
-  max-height: 65vh;         /* Altezza massima visibile */
-  overflow: auto;           /* Abilita scroll orizzontale + verticale */
-  position: relative;
-  border: 1px solid #dee2e6; /* Bordi coerenti con Bootstrap */
-      border-radius: 12px;
-      box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
-      background: var(--bg);
+  flex-grow: 1;             /* occupa tutto lo spazio verticale disponibile */
+  overflow-y: auto;         /* scroll verticale per la tabella */
+  max-height: calc(100% - 300px); /* lascia spazio per top bar + bottone */
 }
 
-/* Impostazioni generali tabella */
 .table {
-  border-collapse: separate; /* Fondamentale per sticky */
+  border-collapse: separate; /* necessario per sticky */
   border-spacing: 0;
-  min-width: 900px;          /* Così puoi vedere l’effetto orizzontale */
+  min-width: 1200px;        /* sufficiente per scroll orizzontale */
 }
 
 .table th,
 .table td {
-  white-space: nowrap;       /* Evita che il testo vada a capo */
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
-/* HEADER sticky */
+/* Sticky header */
 .table thead th {
   position: sticky;
   top: 0;
+  background-color: #212529;
+  color: #fff;
   z-index: 2;
-  background-color: #212529; /* Colore header Bootstrap .table-dark */
-  color: white;
 }
 
-/* PRIMA COLONNA sticky */
+/* Prima colonna sticky */
 .table th:first-child,
 .table td:first-child {
   position: sticky;
   left: 0;
+  background-color: #fff;
   z-index: 1;
-  background-color: #fff;    /* Sfondo celle corpo */
 }
 
-/* Prima cella di header ancora sopra */
+/* Header prima colonna */
 .table thead th:first-child {
   z-index: 3;
-  background-color: #212529; /* Sfondo header prima colonna */
+  background-color: #212529;
   color: white;
 }
 
@@ -103,17 +133,16 @@ th {
 .table td:last-child {
   position: sticky;
   right: 0;
+  background-color: #fff;
   z-index: 1;
-  background-color: #fff; /* Sfondo celle corpo */
 }
 
-/* Header dell'ultima colonna */
+/* Header ultima colonna */
 .table thead th:last-child {
   z-index: 3;
-  background-color: #212529; /* Sfondo header ultima colonna */
+  background-color: #212529;
   color: white;
 }
-
 /*@media (max-width: 768px) {
   .table-responsive {
     max-height: 50vh; /* meno spazio su mobile

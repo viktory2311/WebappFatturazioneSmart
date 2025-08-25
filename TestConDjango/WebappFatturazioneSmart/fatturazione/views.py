@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 import json
 from .models import Utente
 from datetime import datetime, timedelta
@@ -86,6 +87,15 @@ def salva_dati(request):
         return JsonResponse({"status": "ok"})
     return JsonResponse({"status": "invalid"}, status=400)
 
+
+@csrf_exempt
+@require_POST
+def reset_utenti(request):
+    try:
+        Utente.objects.all().delete();
+        return JsonResponse({"Status": "ok", "message": "Risposta server: Dati cancellati con successo"})
+    except Exception as e:
+        return JsonResponse({"Status": "error", "message": str(e)}, status=500)
 
 def lista_utenti(request):
     utenti = list(Utente.objects.values())
