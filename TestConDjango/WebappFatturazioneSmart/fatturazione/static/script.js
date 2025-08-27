@@ -65,9 +65,10 @@ window.onload = () => {
                                   "Sud Ovest": u.sud_ovest,
                                   "Ufficio": u.ufficio,
                                   "C - UFFICIO VIA TESSO": u.via_tesso,
- 
-                                  "Totale": u.totale_ore,
-                                  "Data": u.data_riferimento
+                                  "Data": u.data_riferimento,
+                                  "tipologia": u.tipologia,   // <-- aggiungi
+                                  "apl": u.apl,     // <-- aggiungi
+                                  "Totale": u.totale_ore
                                 }));
 
                               /*originalData.forEach((u, i) => {
@@ -88,7 +89,7 @@ window.onload = () => {
             setupDropArea('fileInput-oss', 'oss');
             setupDropArea('fileInput-umana', 'umana');
             setupDropArea('fileInput-sinergy', 'sinergy');
-            setupDropArea('fileInput-ggroup', 'ggroup');
+            setupDropArea('fileInput-gigroup', 'gigroup');
 
 }
 function setupDropArea(fileInputId, source) {
@@ -194,7 +195,18 @@ function loadFile(source) {
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 }); // Salta header
+
+      let jsonData;
+      if(source === "oss"){
+          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 });
+      console.log("Aggiunto file oss 😂");
+      }else{
+          jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      }
+      console.log("✅ File letto:", file.name);
+      console.log("📦 Dati estratti:", jsonData.slice(0, 2));
+      console.log("🔁 Passaggio a processData con source:", source);
+
       processData(jsonData, source);
     };
     reader.readAsArrayBuffer(file);
@@ -204,9 +216,14 @@ function loadFile(source) {
   }
 }
 /*--- FINE ---*/
-
+// DICHIARAZIONE GLOBALE, FUORI DA QUALSIASI FUNZIONE
+let allData = [];
+let ossData = [];
+let visualizedData =[];
 // Funzione che processa i dati a seconda della fonte
 function processData(data, source) {
+
+
   if (source === "oss") {
     // OSS → comportamento originale
     ossData = data;
@@ -224,8 +241,8 @@ function processData(data, source) {
       body: JSON.stringify(ossData)
     }).then(res => res.json()).then(data => console.log("Dati OSS salvati:", data));
 
+    populateTable(ossData);
     populateUtenteFilter();
-    applyFilters();
       // Chiedi conferma prima di aprire la pagina dati
     const conferma = confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?");
     if (conferma) {
@@ -233,19 +250,58 @@ function processData(data, source) {
     }
   } else {
     // Altri file → aggiungi a allData
-    const dataWithSource = data.map(row => ({ ...row, Fonte: source }));
+    const tipologiaMap = {
+      umana: "TIPOLOGIA",
+      sinergy: "TIPOLOGIA",
+      gigroup: "Tipologia"
+    };
+
+    const dataWithSource = data.map(row => {
+      const tipologiaKey = tipologiaMap[source] || "TIPOLOGIA";
+      return {
+        ...row,
+        Fonte: source,
+        apl: deriveAPL(source),
+        tipologia: row[tipologiaKey] || row["TIPOLOGIA"] || ""
+      };
+    });    
+
     allData = [...allData, ...dataWithSource];
+    
+    const minimalData = dataWithSource.map(row => ({
+      descrizione: row["Ragione sociale"] || "",
+      tipologia: row.tipologia || row["TIPOLOGIA"] || "",
+      apl: row.apl || ""
+    }));
 
-    // Ordina per Descrizione
-    allData.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+    console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
 
+    fetch("/salva/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(minimalData)
+    })
+    .then(res => res.json())
+    .then(data => console.log(`✅ Dati ${source} salvati (associati per descrizione):`, data))
+    .catch(err => console.error("❌ Errore nel salvataggio:", err));
+
+
+    populateTable(allData);
     populateUtenteFilter();
-    applyFilters();
     const conferma = confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`);
     if (conferma) {
       showPage('dati');
     }
   }
+}
+//Funzione per gestire APL Source
+function deriveAPL(source) {
+  const s = source.toLowerCase();
+  if (s.includes("gigroup")) return "gigroup";
+  if (s.includes("umana")) return "umana";
+  if (s.includes("sinergy")) return "sinergy";
+  // aggiungi qui le altre sorgenti in futuro
+  return "";
 }
 
 /* GESTIONE VISUALIZZAZIONE MESE CORRENTE GESTITO FRONTEND*/
@@ -374,12 +430,16 @@ function aggiornaUIconData(data) {
  
 
 /* GESTIONE POPOLAZIONE TABELLA */
-function populateTable(data) {
+function populateTable(data, append = true) {
   const tableBody = document.getElementById("dataTable");
-  tableBody.innerHTML = "";
+  console.log("📥 Popolamento tabella con", data.length, "righe");
 
+    if(!append){
+      tableBody.innerHTML = "";
+      visualizedData = [];  // Resetta i dati visualizzati solo se non stai facendo append
+    }
+    
   let totaleUtenti = 0;
-  visualizedData = [];  // Resetta i dati visualizzati
 
   data.forEach(row => {
     // INSERIMENTO UTENTE
@@ -424,8 +484,14 @@ function populateTable(data) {
     const sudOvest = row["Sud Ovest"] || row["C - Sud Ovest"] || "";
     const ufficio = row["Ufficio"] || row["C - Ufficio"] || "";
     const viaTesso = row["C - UFFICIO VIA TESSO"] || "";
+
+    const tipologia = row.tipologia || row["TIPOLOGIA"] || ""; 
+    const apl = row.apl || "";
+    console.log("Stampa di Tipologia 🌿:",row.tipologia);
+
     // INSERIMENTO TOTALE ORE DEL MESE
-    const totaleOre = row.totaleOre || row["Totale"] || "";
+    const totaleOre =  Number(row.totaleOre || row["Totale"] || "");
+    const totaleFormattato = totaleOre.toFixed(2);
 
     const ore = parseFloat(row.Ore) || 0;
     const tariffa = parseFloat(row.Tariffa) || 0;
@@ -456,10 +522,17 @@ function populateTable(data) {
       sudOvest: sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00",
       ufficio: ufficio ? parseFloat(ufficio).toFixed(2) : "0.00",
       viaTesso,
-      totaleOre: totaleOre.toFixed(2),
+      tipologia,
+      apl,
+      totaleFormattato,
     });
-
     
+/*console.log("Riga elaborata prima del tr:", {
+  descrizione,
+  tipologia: row.tipologia || row["TIPOLOGIA"],
+  apl: row.APL
+});*/
+//console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -484,6 +557,8 @@ function populateTable(data) {
       <td>${sudEst ? parseFloat(sudEst).toFixed(2) : "0.00"}</td>
       <td>${sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00"}</td>
       <td>${ufficio ? parseFloat(ufficio).toFixed(2) : "0.00"}</td>
+      <td>${tipologia}</td>
+      <td>${apl}</td>
       <td>${totaleOre.toFixed(2)}</td>
     `;
     tableBody.appendChild(tr);
@@ -513,7 +588,25 @@ function applyFilters() {
   const tipoAnziano = document.getElementById("filtertipoAnziano").value;
   const selectDistretto = document.getElementById("filterDistretto").value;
 
+  const filterCheckboxgigroup = document.getElementById("filterCheckboxgigroup").checked;  
+  const filterCheckboxsinergy = document.getElementById("filterCheckboxsinergy").checked; 
+  const filterCheckboxumana = document.getElementById("filterCheckboxumana").checked; 
+
+  let matchesFonte = true; // default: passa il filtro
+
+  
+
   const filtered = originalData.filter(row => {
+
+  //console.log("Riga corrente Fonte:", row.apl, row);
+  if (filterCheckboxgigroup) {
+        matchesFonte = row.apl === "gigroup";
+    } else if (filterCheckboxsinergy) {
+        matchesFonte = row.apl === "sinergy";
+    } else if (filterCheckboxumana) {
+        matchesFonte = row.apl === "umana";
+    }
+
   const matchesUtente = !utenteValue || row.Descrizione === utenteValue;
   const matchesSearch = (row.Descrizione || "").toLowerCase().includes(searchValue);
 
@@ -566,10 +659,11 @@ function applyFilters() {
     matchesDitretto = valore > 0; // passa se > 0
   }   
     //console.log("Riga completa:", row);
-  return matchesUtente && matchesSearch && matchesCheckbox && matchesCheckboxHCP && matchesTipoAnziano && matchesDitretto;
+  return matchesUtente && matchesSearch && matchesCheckbox && matchesCheckboxHCP && matchesTipoAnziano && matchesDitretto && matchesFonte;
   });
+console.log("Dati filtrati:", filtered.slice(0, 3));
 
-  populateTable(filtered);
+  populateTable(filtered, false);
 }
 
 function populateUtenteFilter() {

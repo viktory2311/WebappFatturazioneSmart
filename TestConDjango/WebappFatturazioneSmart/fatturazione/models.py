@@ -27,6 +27,8 @@ class Utente(models.Model):
     sud_ovest = models.FloatField(default=0)
     ufficio = models.FloatField(default=0)
     via_tesso = models.FloatField(default=0)
+    tipologia = models.CharField(max_length=16, blank=True)
+    apl = models.CharField(max_length=16, blank=True)
 
     totale_ore = models.FloatField(default=0)
 

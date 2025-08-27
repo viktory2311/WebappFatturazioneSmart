@@ -2,11 +2,14 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
+import logging
 from .models import Utente
 from datetime import datetime, timedelta
 from django.shortcuts import render
 import re
 
+# Configura logger
+logger = logging.getLogger(__name__)
 
 def excel_serial_to_date(serial):
     if isinstance(serial, (int, float)):
@@ -35,58 +38,80 @@ def estrai_data_da_header(header):
 
 @csrf_exempt
 def salva_dati(request):
-    if request.method == "POST":
-        body = json.loads(request.body)
-        Utente.objects.all().delete()  # cancella vecchi dati
-        for row in body:
-            '''print("Row ricevuta:", row)'''
-            '''print("Row ricevuta:", body[0])'''
+    if request.method != "POST":
+        return JsonResponse({"status": "invalid"}, status=400)
 
-            # Cerca la colonna che ha una data come "01 lug 2025"
-            intestazione = next((key for key in row.keys() if re.match(r'(\d{2})\s([a-z]{3})\s(\d{4})', key, re.IGNORECASE)), None)
+    body = json.loads(request.body)
+    logger.info(f"Ricevuti {len(body)} record dal frontend")
 
-            if intestazione:
-                # Estrai la data dal header
-                data_riferimento = estrai_data_da_header(intestazione)
-            else:
-                data_riferimento = None
+    for row in body:
+        # Seleziona il campo "nome" in base al file
+        nome = row.get("Descrizione") or row.get("descrizione") or row.get("ragionesociale")
+        if not nome:
+            logger.warning(f"Riga saltata (nessun nome identificativo): {row}")
+            continue  # salta righe senza identificativo
 
+        # Data di riferimento se presente
+        intestazione = next((k for k in row.keys() if re.match(r'(\d{2})\s([a-z]{3})\s(\d{4})', k, re.IGNORECASE)), None)
+        data_riferimento = estrai_data_da_header(intestazione) if intestazione else None
 
-            data_excel = row.get("Data di Nascita Cliente")
-            data_nascita = excel_serial_to_date(data_excel) if data_excel else None
+        # Data di nascita se presente
+        data_excel = row.get("Data di Nascita Cliente") or row.get("DataNascita") or None
+        data_nascita = excel_serial_to_date(data_excel) if data_excel else None
 
-            Utente.objects.create(
-                nome=row.get("Descrizione", ""),
-                data_nascita = data_nascita.date() if data_nascita else None,
-                indirizzo=row.get("Indirizzo Cliente", ""),
-                codice_fiscale=row.get("Codice Fiscale Cliente", ""),
+        # Tipologia e apl
+        tipologia = row.get("tipologia") or row.get("TIPOLOGIA") or ""
+        apl = row.get("apl") or ""
 
-                assistenza_domiciliare_integrata = float((row.get("Assistenza Domiciliare Integrata", "") or row.get("C-ADI", "")) or 0),
-                anziano_autosufficiente = float((row.get("Anziano Autosufficiente", "") or row.get("C - Anziano autosufficiente", "")) or 0),
-                anziano_non_autosufficiente = float((row.get("Anziano Non Autosufficiente", "") or row.get("C - Anziano non autosufficiente", "")) or 0),
-                contratti_privati = float((row.get("Contratti Privati", "") or row.get("C - Contratti privati", "")) or 0),
-                disabile = float((row.get("Disabile", "") or row.get("C - Disabile", "")) or 0),
-                distretto_nord = float((row.get("Distretto Nord", "") or row.get("C - DISTRETTO NORD", "")) or 0),
-                distretto_sud = float((row.get("Distretto Sud", "") or row.get("C - DISTRETTO SUD", "")) or 0),
-                emergenza_caldo_asl = float((row.get("Emergenza Caldo ASL", "") or row.get("C - EMERGENZA CALDO ASL", "")) or 0),
-                emergenza_caldo_comune = float((row.get("Emergenza Caldo Comune", "") or row.get("C - EMERGENZA CALDO COMUNE", "")) or 0),
-                hcp = float((row.get("HCP", "") or row.get("C - HCP", "")) or 0),
-                minori_disabili_gravi = float((row.get("Minori Disabili Gravi", "") or row.get("C - Minori disabili gravi", "")) or 0),
-                nord_ovest = float((row.get("Nord Ovest", "") or row.get("C - Nord Ovest", "")) or 0),
-                pnrr = float((row.get("PNRR", "") or row.get("C - PNRR", "")) or 0),
-                progetto_sod = float((row.get("Progetto SOD", "") or row.get("C - Progetto SOD", "")) or 0),
-                sud_est = float((row.get("Sud Est", "") or row.get("C - Sud Est", "")) or 0),
-                sud_ovest = float((row.get("Sud Ovest", "") or row.get("C - Sud Ovest", "")) or 0),
-                ufficio = float((row.get("Ufficio", "") or row.get("C - Ufficio", "")) or 0),
-                via_tesso = float((row.get("C - UFFICIO VIA TESSO", "")) or 0),
+        # Funzione helper per campi numerici
+        def parse_float(*keys):
+            for key in keys:
+                val = row.get(key)
+                if val not in (None, ""):
+                    try:
+                        return float(val)
+                    except Exception as e:
+                        logger.warning(f"Errore convertendo {key}='{val}' in float: {e}")
+                        return 0
+            return 0
 
-                totale_ore=float(row.get("Totale", 0)),
+        utente, created = Utente.objects.update_or_create(
+            nome=nome.strip(),
+            defaults={
+                "data_nascita": data_nascita.date() if data_nascita else None,
+                "indirizzo": row.get("Indirizzo Cliente", ""),
+                "codice_fiscale": row.get("Codice Fiscale Cliente", ""),
+                "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI"),
+                "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente"),
+                "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente"),
+                "contratti_privati": parse_float("Contratti Privati", "C - Contratti privati"),
+                "disabile": parse_float("Disabile", "C - Disabile"),
+                "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
+                "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
+                "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL"),
+                "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE"),
+                "hcp": parse_float("HCP", "C - HCP"),
+                "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori disabili gravi"),
+                "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
+                "pnrr": parse_float("PNRR", "C - PNRR"),
+                "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD"),
+                "sud_est": parse_float("Sud Est", "C - Sud Est"),
+                "sud_ovest": parse_float("Sud Ovest", "C - Sud Ovest"),
+                "ufficio": parse_float("Ufficio", "C - Ufficio"),
+                "via_tesso": parse_float("C - UFFICIO VIA TESSO"),
+                "tipologia": tipologia,
+                "apl": apl,
+                "totale_ore": parse_float("Totale"),
+                "data_riferimento": data_riferimento
+            }
+        )
 
-                data_riferimento=data_riferimento  # Salva la data di riferimento
-            )
-        return JsonResponse({"status": "ok"})
-    return JsonResponse({"status": "invalid"}, status=400)
+        if created:
+            print(f"Creato nuovo utente: {nome.strip()}")
+        else:
+            print(f"Aggiornato utente esistente: {nome.strip()}")
 
+    return JsonResponse({"status": "ok"})
 
 @csrf_exempt
 @require_POST
