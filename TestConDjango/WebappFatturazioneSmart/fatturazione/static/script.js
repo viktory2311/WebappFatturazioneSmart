@@ -221,79 +221,125 @@ let allData = [];
 let ossData = [];
 let visualizedData =[];
 // Funzione che processa i dati a seconda della fonte
-function processData(data, source) {
-
-
-  if (source === "oss") {
-    // OSS → comportamento originale
-    ossData = data;
-    aggiornaMeseDaHeader(ossData);
-
-    if (ossData.length > 1) {
-      const righeDaOrdinare = ossData.slice(0, -1);
-      righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
-      ossData = [...righeDaOrdinare, ossData[ossData.length-1]];
-    }
-
-    fetch("/salva/", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(ossData)
-    }).then(res => res.json()).then(data => console.log("Dati OSS salvati:", data));
-
-    populateTable(ossData);
-    populateUtenteFilter();
-      // Chiedi conferma prima di aprire la pagina dati
-    const conferma = confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?");
-    if (conferma) {
-      showPage('dati');
-    }
-  } else {
-    // Altri file → aggiungi a allData
-    const tipologiaMap = {
-      umana: "TIPOLOGIA",
-      sinergy: "TIPOLOGIA",
-      gigroup: "Tipologia"
-    };
-
-    const dataWithSource = data.map(row => {
-      const tipologiaKey = tipologiaMap[source] || "TIPOLOGIA";
-      return {
+async function processData(data, source) {
+  try {
+    if (source === "oss") {
+      let ossData = data.map(row => ({
         ...row,
+        tipologia: row["TIPOLOGIA"] || "",
+        apl: deriveAPL(source)
+      }));
+      
+      aggiornaMeseDaHeader(ossData);
+
+      if (ossData.length > 1) {
+        const righeDaOrdinare = ossData.slice(0, -1);
+        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+        ossData = [...righeDaOrdinare, ossData[ossData.length - 1]];
+      }
+
+      const res = await fetch("/salva/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ossData)
+      });
+      const savedData = await res.json();
+      console.log("✅ Dati OSS salvati:", savedData);
+
+      populateTable(ossData);
+      populateUtenteFilter();
+
+      if (confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?")) {
+        showPage('dati');
+      }
+
+    } else if (["gigroup", "sinergy"].includes(source)) {
+      const tipologiaMap = {
+        umana: "TIPOLOGIA",
+        sinergy: "TIPOLOGIA",
+        gigroup: "Tipologia"
+      };
+      const tipologiaKey = tipologiaMap[source] || "TIPOLOGIA";
+
+      const dataWithSource = data.map(row => ({
+        ...row,
+        descrizione: row["Ragione sociale"] || "",
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: row[tipologiaKey] || row["TIPOLOGIA"] || ""
-      };
-    });    
+      }));
 
-    allData = [...allData, ...dataWithSource];
-    
-    const minimalData = dataWithSource.map(row => ({
-      descrizione: row["Ragione sociale"] || "",
-      tipologia: row.tipologia || row["TIPOLOGIA"] || "",
-      apl: row.apl || ""
-    }));
+      allData = [...allData, ...dataWithSource];
 
-    console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
+      const minimalData = dataWithSource.map(row => ({
+        descrizione: row["Ragione sociale"] || "",
+        tipologia: row.tipologia || row["TIPOLOGIA"] || "",
+        apl: row.apl || ""
+      }));
 
-    fetch("/salva/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(minimalData)
-    })
-    .then(res => res.json())
-    .then(data => console.log(`✅ Dati ${source} salvati (associati per descrizione):`, data))
-    .catch(err => console.error("❌ Errore nel salvataggio:", err));
+      console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
+      
+      // Salva i dati e poi carica utenti aggiornati
+      await fetch("/salva/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(minimalData)
+      });
 
+      let utentiRes = await fetch("/utenti/");
+      let utentiData = await utentiRes.json();
 
-    populateTable(allData);
-    populateUtenteFilter();
-    const conferma = confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`);
-    if (conferma) {
-      showPage('dati');
+      // Mappo dati DB → frontend
+      originalData = utentiData.map(u => ({
+        "Descrizione": u.nome,
+        "Data di Nascita Cliente": formatDateIfValid(u.data_nascita),
+        "Indirizzo Cliente": u.indirizzo,
+        "Codice Fiscale Cliente": u.codice_fiscale,
+        "Assistenza Domiciliare Integrata": u.assistenza_domiciliare_integrata,
+        "Anziano Autosufficiente": u.anziano_autosufficiente,
+        "Anziano Non Autosufficiente": u.anziano_non_autosufficiente,
+        "Contratti Privati": u.contratti_privati,
+        "Disabile": u.disabile,
+        "Distretto Nord": u.distretto_nord,
+        "Distretto Sud": u.distretto_sud,
+        "Emergenza Caldo ASL": u.emergenza_caldo_asl,
+        "Emergenza Caldo Comune": u.emergenza_caldo_comune,
+        "HCP": u.hcp,
+        "Minori Disabili Gravi": u.minori_disabili_gravi,
+        "Nord Ovest": u.nord_ovest,
+        "PNRR": u.pnrr,
+        "Progetto SOD": u.progetto_sod,
+        "Sud Est": u.sud_est,
+        "Sud Ovest": u.sud_ovest,
+        "Ufficio": u.ufficio,
+        "C - UFFICIO VIA TESSO": u.via_tesso,
+        "Data": u.data_riferimento,
+        "tipologia": u.tipologia,
+        "apl": u.apl,
+        "Totale": u.totale_ore
+      })).map(u => {
+        const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
+        return {
+          ...u,
+          tipologia: match?.tipologia || u.tipologia,
+          apl: match?.apl || u.apl
+        };
+      });
+
+      console.log("🧪 Primo record dopo mapping:", originalData[0]);
+      populateTable(originalData);
+      populateUtenteFilter();
+
+      if (confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`)) {
+        showPage('dati');
+      }
     }
+
+  } catch (err) {
+    console.error("❌ Errore nel caricamento/salvataggio:", err);
   }
 }
+
 //Funzione per gestire APL Source
 function deriveAPL(source) {
   const s = source.toLowerCase();
@@ -430,21 +476,21 @@ function aggiornaUIconData(data) {
  
 
 /* GESTIONE POPOLAZIONE TABELLA */
-function populateTable(data, append = true) {
+function populateTable(data) {
   const tableBody = document.getElementById("dataTable");
   console.log("📥 Popolamento tabella con", data.length, "righe");
 
-    if(!append){
+   
       tableBody.innerHTML = "";
       visualizedData = [];  // Resetta i dati visualizzati solo se non stai facendo append
-    }
+    
     
   let totaleUtenti = 0;
 
   data.forEach(row => {
     // INSERIMENTO UTENTE
-    const descrizione = row.Descrizione || "";
-    if (!descrizione) return; // salta la riga vuota
+    const descrizione = row.Descrizione || row.nome || "";
+    //if (!descrizione) return; // salta la riga vuota
 
     // INSERIMENTO DATA DI NASCITA
     const dataNascita = row.dataNascita || row["Data di Nascita Cliente"] || "";
@@ -526,7 +572,7 @@ function populateTable(data, append = true) {
       apl,
       totaleFormattato,
     });
-    
+    //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
 /*console.log("Riga elaborata prima del tr:", {
   descrizione,
   tipologia: row.tipologia || row["TIPOLOGIA"],
@@ -663,7 +709,7 @@ function applyFilters() {
   });
 console.log("Dati filtrati:", filtered.slice(0, 3));
 
-  populateTable(filtered, false);
+  populateTable(filtered);
 }
 
 function populateUtenteFilter() {

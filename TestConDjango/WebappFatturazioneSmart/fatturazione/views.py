@@ -52,14 +52,17 @@ def salva_dati(request):
             continue  # salta righe senza identificativo
 
         # Data di riferimento se presente
-        intestazione = next((k for k in row.keys() if re.match(r'(\d{2})\s([a-z]{3})\s(\d{4})', k, re.IGNORECASE)), None)
+        intestazione = next(
+            (k for k in row.keys() if re.match(r'(\d{2})\s([a-z]{3})\s(\d{4})', k, re.IGNORECASE)),
+            None
+        )
         data_riferimento = estrai_data_da_header(intestazione) if intestazione else None
 
         # Data di nascita se presente
         data_excel = row.get("Data di Nascita Cliente") or row.get("DataNascita") or None
         data_nascita = excel_serial_to_date(data_excel) if data_excel else None
 
-        # Tipologia e apl
+        # Tipologia e APL
         tipologia = row.get("tipologia") or row.get("TIPOLOGIA") or ""
         apl = row.get("apl") or ""
 
@@ -75,42 +78,48 @@ def salva_dati(request):
                         return 0
             return 0
 
+        # defaults comuni
+        defaults = {
+            "data_nascita": data_nascita.date() if data_nascita else None,
+            "indirizzo": row.get("Indirizzo Cliente", ""),
+            "codice_fiscale": row.get("Codice Fiscale Cliente", ""),
+            "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI"),
+            "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente"),
+            "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente"),
+            "contratti_privati": parse_float("Contratti Privati", "C - Contratti privati"),
+            "disabile": parse_float("Disabile", "C - Disabile"),
+            "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
+            "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
+            "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL"),
+            "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE"),
+            "hcp": parse_float("HCP", "C - HCP"),
+            "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori disabili gravi"),
+            "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
+            "pnrr": parse_float("PNRR", "C - PNRR"),
+            "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD"),
+            "sud_est": parse_float("Sud Est", "C - Sud Est"),
+            "sud_ovest": parse_float("Sud Ovest", "C - Sud Ovest"),
+            "ufficio": parse_float("Ufficio", "C - Ufficio"),
+            "via_tesso": parse_float("C - UFFICIO VIA TESSO"),
+            "totale_ore": parse_float("Totale"),
+            "data_riferimento": data_riferimento,
+        }
+
+        # aggiorno tipologia e apl solo se arrivano valorizzati
+        if tipologia:
+            defaults["tipologia"] = tipologia
+        if apl:
+            defaults["apl"] = apl
+
         utente, created = Utente.objects.update_or_create(
             nome=nome.strip(),
-            defaults={
-                "data_nascita": data_nascita.date() if data_nascita else None,
-                "indirizzo": row.get("Indirizzo Cliente", ""),
-                "codice_fiscale": row.get("Codice Fiscale Cliente", ""),
-                "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI"),
-                "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente"),
-                "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente"),
-                "contratti_privati": parse_float("Contratti Privati", "C - Contratti privati"),
-                "disabile": parse_float("Disabile", "C - Disabile"),
-                "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
-                "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
-                "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL"),
-                "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE"),
-                "hcp": parse_float("HCP", "C - HCP"),
-                "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori disabili gravi"),
-                "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
-                "pnrr": parse_float("PNRR", "C - PNRR"),
-                "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD"),
-                "sud_est": parse_float("Sud Est", "C - Sud Est"),
-                "sud_ovest": parse_float("Sud Ovest", "C - Sud Ovest"),
-                "ufficio": parse_float("Ufficio", "C - Ufficio"),
-                "via_tesso": parse_float("C - UFFICIO VIA TESSO"),
-                "tipologia": tipologia,
-                "apl": apl,
-                "totale_ore": parse_float("Totale"),
-                "data_riferimento": data_riferimento
-            }
+            defaults=defaults
         )
 
         if created:
             print(f"Creato nuovo utente: {nome.strip()}")
         else:
             print(f"Aggiornato utente esistente: {nome.strip()}")
-
     return JsonResponse({"status": "ok"})
 
 @csrf_exempt
