@@ -533,7 +533,7 @@ function populateTable(data) {
 
     const tipologia = row.tipologia || row["TIPOLOGIA"] || ""; 
     const apl = row.apl || "";
-    console.log("Stampa di Tipologia 🌿:",row.tipologia);
+    //console.log("Stampa di Tipologia 🌿:",row.tipologia);
 
     // INSERIMENTO TOTALE ORE DEL MESE
     const totaleOre =  Number(row.totaleOre || row["Totale"] || "");
@@ -545,33 +545,34 @@ function populateTable(data) {
     totaleUtenti++;
     
     // Aggiungi la riga ai dati visualizzati
-    visualizedData.push({
-      descrizione,
-      dataNascita: dataFormattata,
-      indirizzo,
-      codiceFiscale,
-      assistenzaDomiciliareIntegrata: assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : "0.00",
-      anianoAutosuficente: anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : "0.00",
-      anianoNonAutosuficente: anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : "0.00",
-      contrattiPrivati: contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00",
-      disabile: disabile ? parseFloat(disabile).toFixed(2) : "0.00",
-      distrettoNord: distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00",
-      distrettoSud: distrettoSud ? parseFloat(distrettoSud).toFixed(2) : "0.00",
-      emergenzaCaldoASL: emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : "0.00",
-      emergenzaCaldoComune: emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : "0.00",
-      hcp: hcp ? parseFloat(hcp).toFixed(2) : "0.00",
-      minoriDisabiliGravi: minoriDisabiliGravi ? parseFloat(minoriDisabiliGravi).toFixed(2) : "0.00",
-      nordOvest: nordOvest ? parseFloat(nordOvest).toFixed(2) : "0.00",
-      pnrr: pnrr ? parseFloat(pnrr).toFixed(2) : "0.00",
-      progettoSOD: progettoSOD ? parseFloat(progettoSOD).toFixed(2) : "0.00",
-      sudEst: sudEst ? parseFloat(sudEst).toFixed(2) : "0.00",
-      sudOvest: sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00",
-      ufficio: ufficio ? parseFloat(ufficio).toFixed(2) : "0.00",
-      viaTesso,
-      tipologia,
-      apl,
-      totaleFormattato,
-    });
+      visualizedData.push({
+        descrizione,
+        dataNascita: dataFormattata,
+        indirizzo,
+        codiceFiscale,
+        assistenzaDomiciliareIntegrata: assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : "0.00",
+        anianoAutosuficente: anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : "0.00",
+        anianoNonAutosuficente: anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : "0.00",
+        contrattiPrivati: contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00",
+        disabile: disabile ? parseFloat(disabile).toFixed(2) : "0.00",
+        distrettoNord: distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00",
+        distrettoSud: distrettoSud ? parseFloat(distrettoSud).toFixed(2) : "0.00",
+        emergenzaCaldoASL: emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : "0.00",
+        emergenzaCaldoComune: emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : "0.00",
+        hcp: hcp ? parseFloat(hcp).toFixed(2) : "0.00",
+        minoriDisabiliGravi: minoriDisabiliGravi ? parseFloat(minoriDisabiliGravi).toFixed(2) : "0.00",
+        nordOvest: nordOvest ? parseFloat(nordOvest).toFixed(2) : "0.00",
+        pnrr: pnrr ? parseFloat(pnrr).toFixed(2) : "0.00",
+        progettoSOD: progettoSOD ? parseFloat(progettoSOD).toFixed(2) : "0.00",
+        sudEst: sudEst ? parseFloat(sudEst).toFixed(2) : "0.00",
+        sudOvest: sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00",
+        ufficio: ufficio ? parseFloat(ufficio).toFixed(2) : "0.00",
+        viaTesso,
+        tipologia,
+        apl,
+        totaleFormattato,
+      });
+      console.log("📦 Contenuto visualizedData[0]:", visualizedData[2]);
     //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
 /*console.log("Riga elaborata prima del tr:", {
   descrizione,
@@ -756,7 +757,7 @@ async function exportExcel() {
     alert("Nessun dato da esportare!");
     return;
   }
-
+  console.log("📦 Contenuto visualizedData:", visualizedData);
   // Ricavo il mese dal campo Data (YYYY-MM-DD)
   let meseCompleto = "ND";
   try {
@@ -877,10 +878,50 @@ async function exportExcel() {
       }
     }
 
+            
+
     // Definisci la riga di dati in base al tipo di fattura
     switch (tipoFattura) {
       case 'anziani_non_autosufficenti':
-        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, row.tipoIntervento, row.oreMensili, row.intervento, row.quantita, row.totale, row.apl, print_distretto];
+                function sanitize(v, fallback = "Valore non disponibile") {
+                  if (v == null) return fallback;                          // null o undefined
+                  let s;
+                  try {
+                    if (Array.isArray(v)) s = v.join(" ");
+                    else s = (typeof v === "string" ? v : String(v));
+                    
+                  } catch {
+                    return fallback;
+                  }
+
+                  // rimuovi NBSP, ZWSP, BOM, ecc. e comprimi spazi
+                  s = s.replace(/[\u00A0\u200B\u200C\u200D\u202F\u205F\u3000\uFEFF]/g, " ");
+                  s = s.replace(/\s+/g, " ").trim();
+
+                  if (!s || s === "[object Object]") return fallback;      // oggetti stampati come stringa
+                  return s;
+                }
+                    const s = (row.apl == null ? "" : String(row.apl));
+                    console.log("chars:", [...s].map(c => c.charCodeAt(0)), "len:", s.length, "raw:", s);
+                const aplValue = sanitize(row.apl);
+                const tipologiaValue = sanitize(row.tipologia);
+
+                dataRow = [
+                  sanitize(row.descrizione),
+                  sanitize(row.dataNascita),
+                  sanitize(row.codiceFiscale),
+                  sanitize(tipoUtenza),
+                  sanitize(meseCompleto),
+                  tipologiaValue,
+                  sanitize("test tipo "),
+                  sanitize("000"),
+                  sanitize(row.totaleFormattato),
+                  sanitize("000"),
+                  aplValue,    
+                  sanitize(print_distretto)
+                ];
+        console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
+
         break;
       case 'anziani_autosufficenti':
         dataRow = [row.descrizione, row.dataNascita, row.assistenzaDomiciliare, row.anianoAutosuficente, print_distretto];
