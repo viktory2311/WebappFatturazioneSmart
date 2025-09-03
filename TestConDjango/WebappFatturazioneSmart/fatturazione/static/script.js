@@ -68,6 +68,7 @@ window.onload = () => {
                                   "Data": u.data_riferimento,
                                   "tipologia": u.tipologia,   // <-- aggiungi
                                   "apl": u.apl,     // <-- aggiungi
+                                  "oretomese":u.oretotmese,
                                   "Totale": u.totale_ore
                                 }));
 
@@ -266,7 +267,9 @@ async function processData(data, source) {
         descrizione: row["Ragione sociale"] || "",
         Fonte: source,
         apl: deriveAPL(source),
-        tipologia: row[tipologiaKey] || row["TIPOLOGIA"] || ""
+        tipologia: row[tipologiaKey] || row["TIPOLOGIA"] || "",
+        distretto: row["Distretto"] || "",
+        oretotmese: row["ORE_LAV_MESE"] || "",
       }));
 
       allData = [...allData, ...dataWithSource];
@@ -274,7 +277,9 @@ async function processData(data, source) {
       const minimalData = dataWithSource.map(row => ({
         descrizione: row["Ragione sociale"] || "",
         tipologia: row.tipologia || row["TIPOLOGIA"] || "",
-        apl: row.apl || ""
+        apl: row.apl || "",
+        distretto: row["Distretto"] || "",
+        oretotmese: row["ORE_LAV_MESE"] || "",
       }));
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -316,6 +321,7 @@ async function processData(data, source) {
         "Data": u.data_riferimento,
         "tipologia": u.tipologia,
         "apl": u.apl,
+        "oretomese":u.oretotmese,
         "Totale": u.totale_ore
       })).map(u => {
         const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
@@ -533,10 +539,11 @@ function populateTable(data) {
 
     const tipologia = row.tipologia || row["TIPOLOGIA"] || ""; 
     const apl = row.apl || "";
-    //console.log("Stampa di Tipologia 🌿:",row.tipologia);
+    console.log("Stampa di Tipologia 🌿:",row.tipologia);
+    console.log("Stampa di APL 🌿:",row.apl);
 
     // INSERIMENTO TOTALE ORE DEL MESE
-    const totaleOre =  Number(row.totaleOre || row["Totale"] || "");
+    const totaleOre =  Number(row.totaleOre || row["Totale"]|| row.oretotmese || "");
     const totaleFormattato = totaleOre.toFixed(2);
 
     const ore = parseFloat(row.Ore) || 0;
@@ -567,12 +574,11 @@ function populateTable(data) {
         sudEst: sudEst ? parseFloat(sudEst).toFixed(2) : "0.00",
         sudOvest: sudOvest ? parseFloat(sudOvest).toFixed(2) : "0.00",
         ufficio: ufficio ? parseFloat(ufficio).toFixed(2) : "0.00",
-        viaTesso,
-        tipologia,
-        apl,
+        apl: row.apl ?? "Valore non disponibile",
+        tipologia: row.tipologia ?? "Valore non disponibile",
         totaleFormattato,
       });
-      console.log("📦 Contenuto visualizedData[0]:", visualizedData[2]);
+      console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
     //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
 /*console.log("Riga elaborata prima del tr:", {
   descrizione,
@@ -757,8 +763,9 @@ async function exportExcel() {
     alert("Nessun dato da esportare!");
     return;
   }
-  console.log("📦 Contenuto visualizedData:", visualizedData);
-  // Ricavo il mese dal campo Data (YYYY-MM-DD)
+  //console.log("📦 Contenuto visualizedData:", visualizedData);
+
+  /***  Ricavo il mese dal campo Data (YYYY-MM-DD)***/
   let meseCompleto = "ND";
   try {
     meseCompleto = aggiornaUIconData(originalData); // la funzione che già usi
@@ -839,10 +846,14 @@ async function exportExcel() {
       cell.alignment = { horizontal: "center", vertical: "middle" };
     }
   });
-
   // --- Inserisci i dati per il Distretto Nord e Sud --- 
+  //console.log("📦 Contenuto visualizedData prima del ciclo:", visualizedData[2]);
   visualizedData.forEach(row => {
     let dataRow = [];
+
+    //console.log("➡️ Chiavi della riga:", Object.keys(row)); // Mostra tutte le proprietà
+    //console.log("✅ APL:", row.apl, "TIPOLOGIA:", row.tipologia); // Mostra i valori
+
     const distrettoNord = row.distrettoNord || "0.00";
     const distrettoSud = row.distrettoSud || "0.00";
     const nordOvest = row.nordOvest || "0.00";
@@ -855,13 +866,16 @@ async function exportExcel() {
     // Verifica a quale distretto appartiene la riga
     const isNord = distrettoNord !== "0.00" || nordOvest !== "0.00"; // Include il Nord se uno dei distretti Nord è valorizzato
     const isSud = distrettoSud !== "0.00" || sudEst !== "0.00" || sudOvest !== "0.00"; // Include il Sud se uno dei distretti Sud è valorizzato
-    
+
+  let aplValue = row.apl;
+  let tipologiaValue = row.tipologia;
+
     let print_distretto = "";  // Variabile per il nome del distretto
 
     // Se il distretto è legato a Nord
     if (isNord) {
       if (distrettoNord > 0) {
-        print_distretto = "   Nord";  // Assegna il nome del distretto
+        print_distretto = "Nord";  // Assegna il nome del distretto
       } else if (nordOvest > 0) {
         print_distretto = "Nord Ovest";  // Assegna il nome del distretto Nord Ovest
       }
@@ -883,46 +897,17 @@ async function exportExcel() {
     // Definisci la riga di dati in base al tipo di fattura
     switch (tipoFattura) {
       case 'anziani_non_autosufficenti':
-                function sanitize(v, fallback = "Valore non disponibile") {
-                  if (v == null) return fallback;                          // null o undefined
-                  let s;
-                  try {
-                    if (Array.isArray(v)) s = v.join(" ");
-                    else s = (typeof v === "string" ? v : String(v));
-                    
-                  } catch {
-                    return fallback;
-                  }
+        // Verifica solo se apl è vuoto o null if (aplValue === " " || aplValue === null || aplValue === undefined) { aplValue = 'Valore non disponibile'; } 
+        console.log("APL Value prima di dettaglio:", row.apl);  // Verifica che il valore sia corretto
+        let prova= "valore non presente";
+        if(row.apl==="gigroup"){
+          prova = "Gigroup";
+        }
 
-                  // rimuovi NBSP, ZWSP, BOM, ecc. e comprimi spazi
-                  s = s.replace(/[\u00A0\u200B\u200C\u200D\u202F\u205F\u3000\uFEFF]/g, " ");
-                  s = s.replace(/\s+/g, " ").trim();
-
-                  if (!s || s === "[object Object]") return fallback;      // oggetti stampati come stringa
-                  return s;
-                }
-                    const s = (row.apl == null ? "" : String(row.apl));
-                    console.log("chars:", [...s].map(c => c.charCodeAt(0)), "len:", s.length, "raw:", s);
-                const aplValue = sanitize(row.apl);
-                const tipologiaValue = sanitize(row.tipologia);
-
-                dataRow = [
-                  sanitize(row.descrizione),
-                  sanitize(row.dataNascita),
-                  sanitize(row.codiceFiscale),
-                  sanitize(tipoUtenza),
-                  sanitize(meseCompleto),
-                  tipologiaValue,
-                  sanitize("test tipo "),
-                  sanitize("000"),
-                  sanitize(row.totaleFormattato),
-                  sanitize("000"),
-                  aplValue,    
-                  sanitize(print_distretto)
-                ];
+        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, "test", "test2", row.totaleFormattato, "test4", row.apl, print_distretto]; 
         console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
-        break;
+   break;
       case 'anziani_autosufficenti':
         dataRow = [row.descrizione, row.dataNascita, row.assistenzaDomiciliare, row.anianoAutosuficente, print_distretto];
         break;
@@ -940,19 +925,18 @@ async function exportExcel() {
         break;
     }
 
-    // Aggiungi i dati al foglio appropriato (Nord o Sud)
     if (isNord) {
       const row = nordWorksheet.addRow(dataRow);
+      console.log("📈 Riga aggiunta a Nord:", row.values); // Controlla i valori della riga aggiunta
       row.eachCell((cell, colNumber) => {
-        // Centra solo le colonne dalla seconda in poi (indice 2)
         if (colNumber > 1) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     } else if (isSud) {
       const row = sudWorksheet.addRow(dataRow);
+      console.log("📈 Riga aggiunta a Sud:", row.values); // Controlla i valori della riga aggiunta
       row.eachCell((cell, colNumber) => {
-        // Centra solo le colonne dalla seconda in poi (indice 2)
         if (colNumber > 1) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }

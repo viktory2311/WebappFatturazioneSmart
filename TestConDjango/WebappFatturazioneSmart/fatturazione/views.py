@@ -88,8 +88,6 @@ def salva_dati(request):
             "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente"),
             "contratti_privati": parse_float("Contratti Privati", "C - Contratti privati"),
             "disabile": parse_float("Disabile", "C - Disabile"),
-            "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
-            "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
             "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL"),
             "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE"),
             "hcp": parse_float("HCP", "C - HCP"),
@@ -111,6 +109,37 @@ def salva_dati(request):
         if apl:
             defaults["apl"] = apl
 
+        # Distretti - inizializziamo i valori come zero
+        distretto = row.get("distretto", "").strip()  # Distretto generico
+        distretto_value = None  # Variabile per il valore del distretto
+
+        # Mappiamo i distretti specifici (Nord, Sud, etc.)
+        if "nord" in distretto.lower():
+            distretto_value = "Nord"
+            defaults["distretto_nord"] = parse_float("Distretto Nord", "C - DISTRETTO NORD")
+        elif "sud" in distretto.lower():
+            distretto_value = "Sud"
+            defaults["distretto_sud"] = parse_float("Distretto Sud", "C - DISTRETTO SUD")
+        elif "nord ovest" in distretto.lower():
+            distretto_value = "Nord Ovest"
+            defaults["nord_ovest"] = parse_float("Nord Ovest", "C - Nord Ovest")
+        elif "sud ovest" in distretto.lower():
+            distretto_value = "Sud Ovest"
+            defaults["sud_ovest"] = parse_float("Sud Ovest", "C - Sud Ovest")
+        elif "est" in distretto.lower():
+            distretto_value = "Sud Est"
+            defaults["sud_est"] = parse_float("Sud Est", "C - Sud Est")
+        else:
+            # Se non è identificato, possiamo considerare un distretto generico
+            distretto_value = "Non Specificato"
+
+        if distretto_value:
+            defaults["distretto"] = distretto_value
+
+        # Aggiungi il campo oretotmese
+        defaults["oretotmese"] = parse_float("OreTotMese", "Ore Totale Mese")
+
+        # Crea o aggiorna l'utente
         utente, created = Utente.objects.update_or_create(
             nome=nome.strip(),
             defaults=defaults
@@ -120,7 +149,9 @@ def salva_dati(request):
             print(f"Creato nuovo utente: {nome.strip()}")
         else:
             print(f"Aggiornato utente esistente: {nome.strip()}")
+
     return JsonResponse({"status": "ok"})
+
 
 @csrf_exempt
 @require_POST
