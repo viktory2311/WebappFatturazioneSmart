@@ -78,11 +78,11 @@ def salva_dati(request):
                         return 0
             return 0
 
-        # defaults comuni
+        # Recupera l'utente se esiste già
+        utente = Utente.objects.filter(nome=nome.strip()).first()
+
+        # defaults comuni (non anagrafici)
         defaults = {
-            "data_nascita": data_nascita.date() if data_nascita else None,
-            "indirizzo": row.get("Indirizzo Cliente", ""),
-            "codice_fiscale": row.get("Codice Fiscale Cliente", ""),
             "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI"),
             "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente"),
             "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente"),
@@ -101,6 +101,9 @@ def salva_dati(request):
             "via_tesso": parse_float("C - UFFICIO VIA TESSO"),
             "totale_ore": parse_float("Totale"),
             "data_riferimento": data_riferimento,
+            "oretotmese": row.get("oretotmese", 0),
+            "buonoservizio": row.get("buonoservizio", 0),
+
         }
 
         # aggiorno tipologia e apl solo se arrivano valorizzati
@@ -109,46 +112,50 @@ def salva_dati(request):
         if apl:
             defaults["apl"] = apl
 
-        # Distretti - inizializziamo i valori come zero
-        distretto = row.get("distretto", "").strip()  # Distretto generico
-        distretto_value = None  # Variabile per il valore del distretto
+        # campi anagrafici → SOLO SE valorizzati
+        if data_nascita:
+            defaults["data_nascita"] = data_nascita.date()
+        if row.get("Indirizzo Cliente"):
+            defaults["indirizzo"] = row.get("Indirizzo Cliente")
+        if row.get("Codice Fiscale Cliente"):
+            defaults["codice_fiscale"] = row.get("Codice Fiscale Cliente")
 
-        # Mappiamo i distretti specifici (Nord, Sud, etc.)
-        if "nord" in distretto.lower():
-            distretto_value = "Nord"
-            defaults["distretto_nord"] = parse_float("Distretto Nord", "C - DISTRETTO NORD")
-        elif "sud" in distretto.lower():
-            distretto_value = "Sud"
-            defaults["distretto_sud"] = parse_float("Distretto Sud", "C - DISTRETTO SUD")
-        elif "nord ovest" in distretto.lower():
+        # gestione distretto come prima
+        distretto = row.get("distretto", "").strip()
+        distretto_value = None
+        if "nord ovest" in distretto.lower():
             distretto_value = "Nord Ovest"
-            defaults["nord_ovest"] = parse_float("Nord Ovest", "C - Nord Ovest")
+            defaults["nord_ovest"] = row.get("oretotmese", 0)
         elif "sud ovest" in distretto.lower():
             distretto_value = "Sud Ovest"
-            defaults["sud_ovest"] = parse_float("Sud Ovest", "C - Sud Ovest")
+            defaults["sud_ovest"] = row.get("oretotmese", 0)
+        elif "sud" in distretto.lower():
+            distretto_value = "Sud"
+            defaults["distretto_sud"] = row.get("oretotmese", 0)
+        elif "nord" in distretto.lower():
+            distretto_value = "Nord"
+            defaults["distretto_nord"] = row.get("oretotmese", 0)
         elif "est" in distretto.lower():
             distretto_value = "Sud Est"
-            defaults["sud_est"] = parse_float("Sud Est", "C - Sud Est")
+            defaults["sud_est"] = row.get("oretotmese", 0)
         else:
-            # Se non è identificato, possiamo considerare un distretto generico
             distretto_value = "Non Specificato"
+            defaults["distretto"] = row.get("oretotmese", 0)
 
         if distretto_value:
             defaults["distretto"] = distretto_value
 
-        # Aggiungi il campo oretotmese
-        defaults["oretotmese"] = parse_float("OreTotMese", "Ore Totale Mese")
-
-        # Crea o aggiorna l'utente
-        utente, created = Utente.objects.update_or_create(
-            nome=nome.strip(),
-            defaults=defaults
-        )
-
-        if created:
-            print(f"Creato nuovo utente: {nome.strip()}")
-        else:
+        # ora aggiorno/creo l’utente
+        if utente:
+            # aggiorno SOLO i campi passati
+            for k, v in defaults.items():
+                setattr(utente, k, v)
+            utente.save()
             print(f"Aggiornato utente esistente: {nome.strip()}")
+        else:
+            utente = Utente.objects.create(nome=nome.strip(), **defaults)
+            print(f"Creato nuovo utente: {nome.strip()}")
+
 
     return JsonResponse({"status": "ok"})
 

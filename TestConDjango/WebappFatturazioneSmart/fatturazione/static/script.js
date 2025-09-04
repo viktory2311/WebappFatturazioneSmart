@@ -68,7 +68,8 @@ window.onload = () => {
                                   "Data": u.data_riferimento,
                                   "tipologia": u.tipologia,   // <-- aggiungi
                                   "apl": u.apl,     // <-- aggiungi
-                                  "oretomese":u.oretotmese,
+                                  "oretotmese":u.oretotmese,
+                                  "buonoservizio":u.buonoservizio,
                                   "Totale": u.totale_ore
                                 }));
 
@@ -269,7 +270,8 @@ async function processData(data, source) {
         apl: deriveAPL(source),
         tipologia: row[tipologiaKey] || row["TIPOLOGIA"] || "",
         distretto: row["Distretto"] || "",
-        oretotmese: row["ORE_LAV_MESE"] || "",
+        oretotmese: row["ORE ENTE"] || "",
+        buonoservizio: row["BUONO SERVIZIO"] || 0,
       }));
 
       allData = [...allData, ...dataWithSource];
@@ -279,7 +281,8 @@ async function processData(data, source) {
         tipologia: row.tipologia || row["TIPOLOGIA"] || "",
         apl: row.apl || "",
         distretto: row["Distretto"] || "",
-        oretotmese: row["ORE_LAV_MESE"] || "",
+        oretotmese: row["ORE ENTE"] || 0,
+        buonoservizio: row["BUONO SERVIZIO"] || 0,
       }));
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -321,7 +324,8 @@ async function processData(data, source) {
         "Data": u.data_riferimento,
         "tipologia": u.tipologia,
         "apl": u.apl,
-        "oretomese":u.oretotmese,
+        "oretotmese":u.oretotmese,
+        "buonoservizio":u.buonoservizio,
         "Totale": u.totale_ore
       })).map(u => {
         const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
@@ -492,7 +496,7 @@ function populateTable(data) {
     
     
   let totaleUtenti = 0;
-
+  console.log("Dati in populateTable:", data.slice(0, 3)); // Log dei primi 2 record per verifica
   data.forEach(row => {
     // INSERIMENTO UTENTE
     const descrizione = row.Descrizione || row.nome || "";
@@ -539,8 +543,10 @@ function populateTable(data) {
 
     const tipologia = row.tipologia || row["TIPOLOGIA"] || ""; 
     const apl = row.apl || "";
-    console.log("Stampa di Tipologia 🌿:",row.tipologia);
-    console.log("Stampa di APL 🌿:",row.apl);
+
+    const oreTotMese = row.oretotmese || row["ORE_LAV_MESE"] || "";
+    console.log("Stampa di Ore TOTALI 🌿:",row.oreTotMese);
+    //console.log("Stampa di APL 🌿:",row.apl);
 
     // INSERIMENTO TOTALE ORE DEL MESE
     const totaleOre =  Number(row.totaleOre || row["Totale"]|| row.oretotmese || "");
@@ -576,9 +582,10 @@ function populateTable(data) {
         ufficio: ufficio ? parseFloat(ufficio).toFixed(2) : "0.00",
         apl: row.apl ?? "Valore non disponibile",
         tipologia: row.tipologia ?? "Valore non disponibile",
+        buonoservizio: row.buonoservizio,
         totaleFormattato,
       });
-      console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
+      //console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
     //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
 /*console.log("Riga elaborata prima del tr:", {
   descrizione,
@@ -785,7 +792,7 @@ async function exportExcel() {
   let headers = [];
   switch (tipoFattura) {
     case 'anziani_non_autosufficenti':
-      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo Intervento", "Ore Mensili", "Intervento", "Quantita", "Totale", "Apl", "Distretto"];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo Intervento", "Ore Mensili", "Costo Orario", "Quantita", "Totale", "Apl", "Distretto"];
       break;
     case 'anziani_autosufficenti':
       headers = ["Descrizione", "Data di Nascita", "Assistenza Domiciliare", "Anziano Autosufficiente", "Distretto"];
@@ -904,7 +911,7 @@ async function exportExcel() {
           prova = "Gigroup";
         }
 
-        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, "test", "test2", row.totaleFormattato, "test4", row.apl, print_distretto]; 
+        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, "test2", row.totaleFormattato, "test4", row.apl, print_distretto]; 
         console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
    break;

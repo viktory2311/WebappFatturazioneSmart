@@ -31,6 +31,7 @@ class Utente(models.Model):
     apl = models.CharField(max_length=16, blank=True)
     distretto = models.CharField(max_length=32, blank=True)
     oretotmese = models.FloatField(default=0)
+    buonoservizio = models.FloatField(default=0)
 
     totale_ore = models.FloatField(default=0)
 
