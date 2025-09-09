@@ -32,6 +32,7 @@ class Utente(models.Model):
     distretto = models.CharField(max_length=32, blank=True)
     oretotmese = models.FloatField(default=0)
     buonoservizio = models.FloatField(default=0)
+    tariffa =  models.FloatField(default=0)
 
     totale_ore = models.FloatField(default=0)
 

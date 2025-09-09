@@ -10,6 +10,7 @@ import re
 
 # Configura logger
 logger = logging.getLogger(__name__)
+DEBUG_COUNT = 0
 
 def excel_serial_to_date(serial):
     if isinstance(serial, (int, float)):
@@ -93,16 +94,19 @@ def salva_dati(request):
             "hcp": parse_float("HCP", "C - HCP"),
             "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori disabili gravi"),
             "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
+            "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
+            "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
             "pnrr": parse_float("PNRR", "C - PNRR"),
             "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD"),
-            "sud_est": parse_float("Sud Est", "C - Sud Est"),
-            "sud_ovest": parse_float("Sud Ovest", "C - Sud Ovest"),
+            "sud_est": parse_float("Sud Est", "C - Sud-Est"),
+            "sud_ovest": parse_float("Sud Ovest", "C - Sud-Ovest"),
             "ufficio": parse_float("Ufficio", "C - Ufficio"),
             "via_tesso": parse_float("C - UFFICIO VIA TESSO"),
             "totale_ore": parse_float("Totale"),
             "data_riferimento": data_riferimento,
             "oretotmese": row.get("oretotmese", 0),
             "buonoservizio": row.get("buonoservizio", 0),
+            "tariffa": row.get("tariffa", 0),
 
         }
 
@@ -120,41 +124,59 @@ def salva_dati(request):
         if row.get("Codice Fiscale Cliente"):
             defaults["codice_fiscale"] = row.get("Codice Fiscale Cliente")
 
-        # gestione distretto come prima
-        distretto = row.get("distretto", "").strip()
-        distretto_value = None
-        if "nord ovest" in distretto.lower():
-            distretto_value = "Nord Ovest"
-            defaults["nord_ovest"] = row.get("oretotmese", 0)
-        elif "sud ovest" in distretto.lower():
-            distretto_value = "Sud Ovest"
-            defaults["sud_ovest"] = row.get("oretotmese", 0)
-        elif "sud" in distretto.lower():
-            distretto_value = "Sud"
-            defaults["distretto_sud"] = row.get("oretotmese", 0)
-        elif "nord" in distretto.lower():
-            distretto_value = "Nord"
-            defaults["distretto_nord"] = row.get("oretotmese", 0)
-        elif "est" in distretto.lower():
-            distretto_value = "Sud Est"
-            defaults["sud_est"] = row.get("oretotmese", 0)
-        else:
-            distretto_value = "Non Specificato"
-            defaults["distretto"] = row.get("oretotmese", 0)
+        # gestione distretto come prima → AGGIORNO SOLO SE DISTRETTO VALORIZZATO
+        distretto = (row.get("distretto") or "").strip()
+        ore = row.get("oretotmese")
+        if distretto and ore not in (None, "", 0):
+            distretto_value = None
+            d = distretto.lower()
+            if "nord ovest" in d:
+                distretto_value = "Nord Ovest"
+                defaults["nord_ovest"] = ore
+            elif "sud ovest" in d:
+                distretto_value = "Sud Ovest"
+                defaults["sud_ovest"] = ore
+            elif "sud" in d:
+                distretto_value = "Sud"
+                defaults["distretto_sud"] = ore
+            elif "sud est" in d:
+                distretto_value = "Sud Est"
+                defaults["sud_est"] = ore
+            elif "nord" in d:
+                distretto_value = "Nord"
+                defaults["distretto_nord"] = ore
+            else:
+                distretto_value = "Non Specificato"
+                defaults["distretto"] = ore
 
-        if distretto_value:
-            defaults["distretto"] = distretto_value
-
+            if distretto_value:
+                defaults["distretto"] = distretto_value       
         # ora aggiorno/creo l’utente
         if utente:
-            # aggiorno SOLO i campi passati
+            # aggiorno SOLO i campi con valore utile
+            codice_fiscale = row.get("Codice Fiscale Cliente")
+            global DEBUG_COUNT
+            
+            if "SPROVIERI" in nome.upper():
+                print("=" * 30)
+                print("=== ROW ORIGINALE ===") 
+                print(row)
+                print("=" * 60)
+                print(f"Salvataggio utente: {codice_fiscale}")
+                print("Campi distretto:")
+                for k in ["distretto", "distretto_nord", "distretto_sud", "nord_ovest", "sud_ovest", "sud_est"]:
+                    print(f"  {k}: {defaults.get(k)}")
+                print("=" * 60)
             for k, v in defaults.items():
-                setattr(utente, k, v)
+                if v not in (None, "", 0):   # <<--- 🔴 modifica qui
+                    setattr(utente, k, v)
             utente.save()
-            print(f"Aggiornato utente esistente: {nome.strip()}")
+            #print(f"Aggiornato utente esistente: {nome.strip()}")
         else:
-            utente = Utente.objects.create(nome=nome.strip(), **defaults)
-            print(f"Creato nuovo utente: {nome.strip()}")
+            # creo l'utente senza campi vuoti
+            clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}  # <<--- 🔴 aggiungi qui
+            utente = Utente.objects.create(nome=nome.strip(), **clean_defaults)
+            #print(f"Creato nuovo utente: {nome.strip()}")
 
 
     return JsonResponse({"status": "ok"})

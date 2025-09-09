@@ -70,9 +70,14 @@ window.onload = () => {
                                   "apl": u.apl,     // <-- aggiungi
                                   "oretotmese":u.oretotmese,
                                   "buonoservizio":u.buonoservizio,
+                                  "tariffa": u.tariffa,
                                   "Totale": u.totale_ore
                                 }));
-
+                                if (originalData.length > 1) {
+                                        const righeDaOrdinare = originalData.slice(0, -1);
+                                        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+                                        originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
+                                      }                                
                               /*originalData.forEach((u, i) => {
                                 if (!u["Data di Nascita Cliente"]) {
                                   console.log(`❌ Vuota in posizione ${i}`, data[i]); // dati originali
@@ -82,15 +87,15 @@ window.onload = () => {
                               });*/
 
                               aggiornaUIconData(originalData);
+                              populateTable(originalData);
                               populateUtenteFilter();
-                              applyFilters();
                             })
             .catch(err => console.error("Errore caricamento utenti:", err));
             // ------------------------------------------
             // Setup per tutti i drop area
             setupDropArea('fileInput-oss', 'oss');
             setupDropArea('fileInput-umana', 'umana');
-            setupDropArea('fileInput-sinergy', 'sinergy');
+            setupDropArea('fileInput-synergie', 'synergie');
             setupDropArea('fileInput-gigroup', 'gigroup');
 
 }
@@ -202,6 +207,9 @@ function loadFile(source) {
       if(source === "oss"){
           jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 });
       console.log("Aggiunto file oss 😂");
+      }else if(source === "synergie"){
+          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 5 });
+      console.log("Aggiunto file oss 😂");
       }else{
           jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
       }
@@ -224,14 +232,13 @@ let ossData = [];
 let visualizedData =[];
 // Funzione che processa i dati a seconda della fonte
 async function processData(data, source) {
-  try {
+  try {    
     if (source === "oss") {
       let ossData = data.map(row => ({
         ...row,
-        tipologia: row["TIPOLOGIA"] || "",
-        apl: deriveAPL(source)
+        tipologia: "OSS",
+        apl: deriveAPL(source),
       }));
-      
       aggiornaMeseDaHeader(ossData);
 
       if (ossData.length > 1) {
@@ -255,23 +262,17 @@ async function processData(data, source) {
         showPage('dati');
       }
 
-    } else if (["gigroup", "sinergy"].includes(source)) {
-      const tipologiaMap = {
-        umana: "TIPOLOGIA",
-        sinergy: "TIPOLOGIA",
-        gigroup: "Tipologia"
-      };
-      const tipologiaKey = tipologiaMap[source] || "TIPOLOGIA";
-
+    } else if (source === "gigroup") {
       const dataWithSource = data.map(row => ({
         ...row,
         descrizione: row["Ragione sociale"] || "",
         Fonte: source,
         apl: deriveAPL(source),
-        tipologia: row[tipologiaKey] || row["TIPOLOGIA"] || "",
-        distretto: row["Distretto"] || "",
+        tipologia: row["TIPOLOGIA"] || "",
+        distretto: row["Distretto"] || "Non specificato",
         oretotmese: row["ORE ENTE"] || "",
         buonoservizio: row["BUONO SERVIZIO"] || 0,
+        tariffa: row["TARIFFA"] || 0,
       }));
 
       allData = [...allData, ...dataWithSource];
@@ -280,9 +281,10 @@ async function processData(data, source) {
         descrizione: row["Ragione sociale"] || "",
         tipologia: row.tipologia || row["TIPOLOGIA"] || "",
         apl: row.apl || "",
-        distretto: row["Distretto"] || "",
+        distretto: row["Distretto"] || "Non specificato",
         oretotmese: row["ORE ENTE"] || 0,
         buonoservizio: row["BUONO SERVIZIO"] || 0,
+        tariffa: row["TARIFFA"] || 0,
       }));
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -326,6 +328,7 @@ async function processData(data, source) {
         "apl": u.apl,
         "oretotmese":u.oretotmese,
         "buonoservizio":u.buonoservizio,
+        "tariffa": u.tariffa,
         "Totale": u.totale_ore
       })).map(u => {
         const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
@@ -335,7 +338,12 @@ async function processData(data, source) {
           apl: match?.apl || u.apl
         };
       });
-
+      
+       if (originalData.length > 1) {
+        const righeDaOrdinare = originalData.slice(0, -1);
+        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+        originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
+      }
       console.log("🧪 Primo record dopo mapping:", originalData[0]);
       populateTable(originalData);
       populateUtenteFilter();
@@ -343,6 +351,100 @@ async function processData(data, source) {
       if (confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`)) {
         showPage('dati');
       }
+    }else if (source === "synergie") {
+ const dataWithSource = data.map(row => ({
+        ...row,
+        descrizione: row["FIRMATARIO"] || " ",
+        Fonte: source,
+        apl: deriveAPL(source),
+        tipologia: "AF",
+        distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
+        oretotmese: row["ORE_LAV_MESE"] || "",
+        buonoservizio: row["ORE IN BUONO"] || 0,
+        tariffa: "14.00",
+      }));
+      console.log("✅ Dati Synergie processati:", dataWithSource.slice(0, 2));
+      allData = [...allData, ...dataWithSource];
+
+      const minimalData = dataWithSource.map(row => ({
+        descrizione: `${row["NOME BENEFICIARIO"] || ""} ${row["COGNOME BENEFICIARIO"] || ""}`,
+        Fonte: source,
+        apl: deriveAPL(source),
+        tipologia: "AF",
+        distretto: row["CIRC."] || "Non specificato",
+        oretotmese: row["ORE_LAV_MESE"] || "",
+        buonoservizio: row["ORE IN BUONO"] || 0,
+        tariffa: (row["ORE_LAV_MESE"] && row["ORE IN BUONO"] && row["ORE IN BUONO"] !== 0) 
+          ? (row["ORE_LAV_MESE"] / row["ORE IN BUONO"]).toFixed(2) 
+          : 0,
+      }));
+
+      //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
+      
+      // Salva i dati e poi carica utenti aggiornati
+      await fetch("/salva/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(minimalData)
+      });
+
+      let utentiRes = await fetch("/utenti/");
+      let utentiData = await utentiRes.json();
+
+      // Mappo dati DB → frontend
+      originalData = utentiData.map(u => ({
+        "Descrizione": u.nome,
+        "Data di Nascita Cliente": formatDateIfValid(u.data_nascita),
+        "Indirizzo Cliente": u.indirizzo,
+        "Codice Fiscale Cliente": u.codice_fiscale,
+        "Assistenza Domiciliare Integrata": u.assistenza_domiciliare_integrata,
+        "Anziano Autosufficiente": u.anziano_autosufficiente,
+        "Anziano Non Autosufficiente": u.anziano_non_autosufficiente,
+        "Contratti Privati": u.contratti_privati,
+        "Disabile": u.disabile,
+        "Distretto Nord": u.distretto_nord,
+        "Distretto Sud": u.distretto_sud,
+        "Emergenza Caldo ASL": u.emergenza_caldo_asl,
+        "Emergenza Caldo Comune": u.emergenza_caldo_comune,
+        "HCP": u.hcp,
+        "Minori Disabili Gravi": u.minori_disabili_gravi,
+        "Nord Ovest": u.nord_ovest,
+        "PNRR": u.pnrr,
+        "Progetto SOD": u.progetto_sod,
+        "Sud Est": u.sud_est,
+        "Sud Ovest": u.sud_ovest,
+        "Ufficio": u.ufficio,
+        "C - UFFICIO VIA TESSO": u.via_tesso,
+        "Data": u.data_riferimento,
+        "tipologia": u.tipologia,
+        "apl": u.apl,
+        "oretotmese":u.oretotmese,
+        "buonoservizio":u.buonoservizio,
+        "tariffa": u.tariffa,
+        "Totale": u.totale_ore
+      })).map(u => {
+        const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
+        return {
+          ...u,
+          tipologia: match?.tipologia || u.tipologia,
+          apl: match?.apl || u.apl
+        };
+      });
+      
+       if (originalData.length > 1) {
+        const righeDaOrdinare = originalData.slice(0, -1);
+        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+        originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
+      }
+      console.log("🧪 Primo record dopo mapping:", originalData[0]);
+      populateTable(originalData);
+      populateUtenteFilter();
+
+      if (confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`)) {
+        showPage('dati');
+      }      
+    }else if (source === "umana") {
+
     }
 
   } catch (err) {
@@ -355,7 +457,7 @@ function deriveAPL(source) {
   const s = source.toLowerCase();
   if (s.includes("gigroup")) return "gigroup";
   if (s.includes("umana")) return "umana";
-  if (s.includes("sinergy")) return "sinergy";
+  if (s.includes("synergie")) return "synergie";
   // aggiungi qui le altre sorgenti in futuro
   return "";
 }
@@ -526,7 +628,7 @@ function populateTable(data) {
     const anianoNonAutosuficente = row["Anziano Non Autosufficiente"] || row["C - Anziano non autosufficiente"] || "";
     const contrattiPrivati = row["Contratti Privati"] || row["C - Contratti privati"] || "";
     const disabile = row["Disabile"] || row["C - Disabile"] || "";
-    const distrettoNord = row["Distretto Nord"] || row["C - DISTRETTO NORD"] || "";
+    const distrettoNord = row["Distretto Nord"] || row["C - DISTRETTO NORD"] || "0.00";
     const distrettoSud = row["Distretto Sud"] || row["C - DISTRETTO SUD"] || "";
     const emergenzaCaldoASL = row["Emergenza Caldo ASL"] || row["C - EMERGENZA CALDO ASL"] || "";
     const emergenzaCaldoComune = row["Emergenza Caldo Comune"] || row["C - EMERGENZA CALDO COMUNE"] || "";
@@ -583,6 +685,7 @@ function populateTable(data) {
         apl: row.apl ?? "Valore non disponibile",
         tipologia: row.tipologia ?? "Valore non disponibile",
         buonoservizio: row.buonoservizio,
+        tariffa: row.tariffa,
         totaleFormattato,
       });
       //console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
@@ -641,6 +744,7 @@ function excelDateToJSDate(serial) {
 
 /* GESTIONI FILTRI DA APPLICARE */
 function applyFilters() {
+
   const utenteValue = document.getElementById("UtenteFilter").value;
   const searchValue = document.getElementById("searchInput").value.toLowerCase();
   const filterCheckboxadi = document.getElementById("filterCheckboxadi").checked;
@@ -649,20 +753,19 @@ function applyFilters() {
   const selectDistretto = document.getElementById("filterDistretto").value;
 
   const filterCheckboxgigroup = document.getElementById("filterCheckboxgigroup").checked;  
-  const filterCheckboxsinergy = document.getElementById("filterCheckboxsinergy").checked; 
+  const filterCheckboxsynergie = document.getElementById("filterCheckboxsynergie").checked; 
   const filterCheckboxumana = document.getElementById("filterCheckboxumana").checked; 
 
   let matchesFonte = true; // default: passa il filtro
 
-  
 
   const filtered = originalData.filter(row => {
 
   //console.log("Riga corrente Fonte:", row.apl, row);
   if (filterCheckboxgigroup) {
         matchesFonte = row.apl === "gigroup";
-    } else if (filterCheckboxsinergy) {
-        matchesFonte = row.apl === "sinergy";
+    } else if (filterCheckboxsynergie) {
+        matchesFonte = row.apl === "synergie";
     } else if (filterCheckboxumana) {
         matchesFonte = row.apl === "umana";
     }
@@ -792,7 +895,7 @@ async function exportExcel() {
   let headers = [];
   switch (tipoFattura) {
     case 'anziani_non_autosufficenti':
-      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo Intervento", "Ore Mensili", "Costo Orario", "Quantita", "Totale", "Apl", "Distretto"];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata","Totale","Apl", "Distretto"];
       break;
     case 'anziani_autosufficenti':
       headers = ["Descrizione", "Data di Nascita", "Assistenza Domiciliare", "Anziano Autosufficiente", "Distretto"];
@@ -810,6 +913,8 @@ async function exportExcel() {
       headers = ["Descrizione", "Data di Nascita", "Indirizzo", "Codice Fiscale", "Distretto"];
       break;
   }
+
+  const interventoCostoMensileIndex = headers.indexOf("Intervento_CostoMensile") + 1;
 
   // Aggiungi la riga per il mese (e il distretto) per entrambi i fogli
   const rowMeseNord = nordWorksheet.addRow([`Mese: ${meseCompleto}`]);
@@ -906,12 +1011,16 @@ async function exportExcel() {
       case 'anziani_non_autosufficenti':
         // Verifica solo se apl è vuoto o null if (aplValue === " " || aplValue === null || aplValue === undefined) { aplValue = 'Valore non disponibile'; } 
         console.log("APL Value prima di dettaglio:", row.apl);  // Verifica che il valore sia corretto
-        let prova= "valore non presente";
-        if(row.apl==="gigroup"){
-          prova = "Gigroup";
+        row.tariffa = parseFloat(row.tariffa).toFixed(2);
+        if(tipologiaValue === "OSS"){
+          row.tariffa = parseFloat("24.00").toFixed(2);;
         }
-
-        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, "test2", row.totaleFormattato, "test4", row.apl, print_distretto]; 
+        const totaleFatturato = "€ " + parseFloat(row.tariffa * row.totaleFormattato).toFixed(2);
+        /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
+          row.totaleFormattato --> Totale Ore Erogate
+          row.tariffa --> Tariffa oraria(Costo Mensile)
+          row.buonoservizio --> Tipo Intervento*/
+        dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl, print_distretto]; 
         console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
    break;
@@ -939,6 +1048,23 @@ async function exportExcel() {
         if (colNumber > 1) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
+            if (colNumber === interventoCostoMensileIndex) {
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "C6EFCE" },
+              };
+            }
+              cell.font = {
+                color: { argb: "000000" },
+              };
+              cell.border = {
+                  top: { style: 'thin', color: { argb: '000000' } },
+                  left: { style: 'thin', color: { argb: '000000' } },
+                  bottom: { style: 'thin', color: { argb: '000000' } },
+                  right: { style: 'thin', color: { argb: '000000' } }
+                };
+        
       });
     } else if (isSud) {
       const row = sudWorksheet.addRow(dataRow);
@@ -947,6 +1073,22 @@ async function exportExcel() {
         if (colNumber > 1) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
+            if (colNumber === interventoCostoMensileIndex) {
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "C6EFCE" },
+              };
+            }
+              cell.font = {
+                color: { argb: "000000" },
+              };
+              cell.border = {
+                  top: { style: 'thin', color: { argb: '000000' } },
+                  left: { style: 'thin', color: { argb: '000000' } },
+                  bottom: { style: 'thin', color: { argb: '000000' } },
+                  right: { style: 'thin', color: { argb: '000000' } }
+                };
       });
     }
   });
