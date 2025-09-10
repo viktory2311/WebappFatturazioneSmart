@@ -79,7 +79,7 @@ def salva_dati(request):
                         return 0
             return 0
 
-        # Recupera l'utente se esiste già
+        # Recupera l'utente se esiste già   
         utente = Utente.objects.filter(nome=nome.strip()).first()
 
         # defaults comuni (non anagrafici)
@@ -168,13 +168,13 @@ def salva_dati(request):
                     print(f"  {k}: {defaults.get(k)}")
                 print("=" * 60)
             for k, v in defaults.items():
-                if v not in (None, "", 0):   # <<--- 🔴 modifica qui
+                if v not in (None, "", 0):  
                     setattr(utente, k, v)
             utente.save()
             #print(f"Aggiornato utente esistente: {nome.strip()}")
         else:
             # creo l'utente senza campi vuoti
-            clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}  # <<--- 🔴 aggiungi qui
+            clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}  
             utente = Utente.objects.create(nome=nome.strip(), **clean_defaults)
             #print(f"Creato nuovo utente: {nome.strip()}")
 

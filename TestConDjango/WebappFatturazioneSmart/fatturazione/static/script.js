@@ -209,14 +209,14 @@ function loadFile(source) {
       console.log("Aggiunto file oss 😂");
       }else if(source === "synergie"){
           jsonData = XLSX.utils.sheet_to_json(sheet, { range: 5 });
-      console.log("Aggiunto file oss 😂");
+      console.log("Aggiunto file synergie 😂");
       }else{
           jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
       }
       console.log("✅ File letto:", file.name);
       console.log("📦 Dati estratti:", jsonData.slice(0, 2));
+      if(source ==="umana"){console.log("SI");}
       console.log("🔁 Passaggio a processData con source:", source);
-
       processData(jsonData, source);
     };
     reader.readAsArrayBuffer(file);
@@ -232,6 +232,7 @@ let ossData = [];
 let visualizedData =[];
 // Funzione che processa i dati a seconda della fonte
 async function processData(data, source) {
+  console.log("😁😁 Valore di Source: ");
   try {    
     if (source === "oss") {
       let ossData = data.map(row => ({
@@ -444,7 +445,96 @@ async function processData(data, source) {
         showPage('dati');
       }      
     }else if (source === "umana") {
+      console.log("📝 Dati ricevuti per Umana:", data);
+        const dataWithSource = data.map(row => ({
+        ...row,
+        descrizione: row["Ragione sociale"] || " ",
+        Fonte: source,
+        apl: deriveAPL(source),
+        tipologia: "AF",
+        distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
+        oretotmese: row["Ore_Lav_Mese"] || "",
+        buonoservizio: row["Ore_Inbuono"] || 0,
+        tariffa: "14.00",
+      }));
+      console.log("✅ Dati Umana processati:", dataWithSource.slice(0, 2));
+      allData = [...allData, ...dataWithSource];
 
+      const minimalData = dataWithSource.map(row => ({
+        descrizione: row["Ragione sociale"] || "Non specificato",
+        Fonte: source,
+        apl: deriveAPL(source),
+        tipologia: "AF",
+        distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
+        oretotmese: row["Ore_Lav_Mese"] || "",
+        buonoservizio: row["Ore_Inbuono"] || 0,
+        tariffa: "14.00",
+      }));
+
+      //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
+      
+      // Salva i dati e poi carica utenti aggiornati
+      await fetch("/salva/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(minimalData)
+      });
+
+      let utentiRes = await fetch("/utenti/");
+      let utentiData = await utentiRes.json();
+
+      // Mappo dati DB → frontend
+      originalData = utentiData.map(u => ({
+        "Descrizione": u.nome,
+        "Data di Nascita Cliente": formatDateIfValid(u.data_nascita),
+        "Indirizzo Cliente": u.indirizzo,
+        "Codice Fiscale Cliente": u.codice_fiscale,
+        "Assistenza Domiciliare Integrata": u.assistenza_domiciliare_integrata,
+        "Anziano Autosufficiente": u.anziano_autosufficiente,
+        "Anziano Non Autosufficiente": u.anziano_non_autosufficiente,
+        "Contratti Privati": u.contratti_privati,
+        "Disabile": u.disabile,
+        "Distretto Nord": u.distretto_nord,
+        "Distretto Sud": u.distretto_sud,
+        "Emergenza Caldo ASL": u.emergenza_caldo_asl,
+        "Emergenza Caldo Comune": u.emergenza_caldo_comune,
+        "HCP": u.hcp,
+        "Minori Disabili Gravi": u.minori_disabili_gravi,
+        "Nord Ovest": u.nord_ovest,
+        "PNRR": u.pnrr,
+        "Progetto SOD": u.progetto_sod,
+        "Sud Est": u.sud_est,
+        "Sud Ovest": u.sud_ovest,
+        "Ufficio": u.ufficio,
+        "C - UFFICIO VIA TESSO": u.via_tesso,
+        "Data": u.data_riferimento,
+        "tipologia": u.tipologia,
+        "apl": u.apl,
+        "oretotmese":u.oretotmese,
+        "buonoservizio":u.buonoservizio,
+        "tariffa": u.tariffa,
+        "Totale": u.totale_ore
+      })).map(u => {
+        const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
+        return {
+          ...u,
+          tipologia: match?.tipologia || u.tipologia,
+          apl: match?.apl || u.apl
+        };
+      });
+      
+       if (originalData.length > 1) {
+        const righeDaOrdinare = originalData.slice(0, -1);
+        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+        originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
+      }
+      console.log("🧪 Primo record dopo mapping:", originalData[0]);
+      populateTable(originalData);
+      populateUtenteFilter();
+
+      if (confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`)) {
+        showPage('dati');
+      }      
     }
 
   } catch (err) {
@@ -598,7 +688,8 @@ function populateTable(data) {
     
     
   let totaleUtenti = 0;
-  console.log("Dati in populateTable:", data.slice(0, 3)); // Log dei primi 2 record per verifica
+      //console.log("Dati in populateTable:", data.slice(0, 3)); // Log dei primi 2 record per verificaù
+      console.log("Dati in populateTable:", data);
   data.forEach(row => {
     // INSERIMENTO UTENTE
     const descrizione = row.Descrizione || row.nome || "";
