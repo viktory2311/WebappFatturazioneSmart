@@ -82,7 +82,11 @@ def salva_dati(request):
             return 0
 
         # Recupera l'utente se esiste già   
-        utente = Utente.objects.filter(nome=nome.strip()).first()
+        utente = Utente.objects.filter(
+            nome=nome.strip(),
+            tipologia=tipologia,
+            apl=apl
+        ).first()
 
         # defaults comuni (non anagrafici)
         defaults = {
@@ -110,7 +114,7 @@ def salva_dati(request):
             "buonoservizio": row.get("buonoservizio", 0),
             "tariffa": tariffa_val or 0,
         }
-        print(f"Tariffa per dopo defoult {nome}: {tariffa_val}{defaults["tariffa"]}")
+        print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
 
         # aggiorno tipologia e apl solo se arrivano valorizzati
         if tipologia:
@@ -175,10 +179,17 @@ def salva_dati(request):
             utente.save()
             #print(f"Aggiornato utente esistente: {nome.strip()}")
         else:
-            # creo l'utente senza campi vuoti
-            clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}  
-            utente = Utente.objects.create(nome=nome.strip(), **clean_defaults)
-            #print(f"Creato nuovo utente: {nome.strip()}")
+                # creo SEMPRE un nuovo record se quella combinazione non esiste già
+                clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}
+                # rimuovo tipologia e apl per evitare conflitti
+                clean_defaults.pop("tipologia", None)
+                clean_defaults.pop("apl", None)
+                utente = Utente.objects.create(
+                    nome=nome.strip(),
+                    tipologia=tipologia,
+                    apl=apl,
+                    **clean_defaults
+                )
 
 
     return JsonResponse({"status": "ok"})
@@ -189,17 +200,19 @@ def salva_tariffe(request):
     try:
         data = json.loads(request.body)
         for prestazione, valore in data.items():
-            Tariffa.objects.update_or_create(
+            # aggiorna la tabella Tariffa
+            tariffa, _ = Tariffa.objects.update_or_create(
                 tipologia=prestazione,
                 defaults={"valore": valore}
             )
-        print(data)
+            
+            # aggiorna anche tutti gli utenti che hanno quella tipologia
+            Utente.objects.filter(tipologia=prestazione).update(tariffa=valore)
 
         return JsonResponse({"status": "ok", "message": "Tariffe salvate"})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
     
-
 def get_tariffa(prestazione):
     try:
         return Tariffa.objects.get(tipologia=prestazione).valore

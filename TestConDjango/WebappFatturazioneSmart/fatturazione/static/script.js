@@ -200,14 +200,16 @@ function loadFile(source) {
     reader.onload = function(e) {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
+      let sheetName = workbook.SheetNames[0];
+      let sheet = workbook.Sheets[sheetName];
 
       let jsonData;
       if(source === "oss"){
           jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 });
       console.log("Aggiunto file oss 😂");
       }else if(source === "synergie"){
+          let sheetName = workbook.SheetNames[1];
+          let sheet = workbook.Sheets[sheetName];
           jsonData = XLSX.utils.sheet_to_json(sheet, { range: 5 });
       console.log("Aggiunto file synergie 😂");
       }else{
@@ -286,14 +288,7 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore
-      })).map(u => {
-        const match = ossData.find(r => r.descrizione === u.Descrizione);
-        return {
-          ...u,
-          tipologia: match?.tipologia || u.tipologia,
-          apl: match?.apl || u.apl
-        };
-      });
+      }))
       
        if (originalData.length > 1) {
         const righeDaOrdinare = originalData.slice(0, -1);
@@ -318,6 +313,8 @@ async function processData(data, source) {
         oretotmese: row["ORE ENTE"] || "",
         buonoservizio: row["BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
+        indirizzo: row["Descrizione circoscrizione"] || "",
+        codice_fiscale: row["CODICE FISCALE"] || "",
       }));
 
       allData = [...allData, ...dataWithSource];
@@ -330,6 +327,8 @@ async function processData(data, source) {
         oretotmese: row["ORE ENTE"] || 0,
         buonoservizio: row["BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
+        "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
+        "Codice Fiscale Cliente": row["CODICE FISCALE"] || "",
       }));
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -375,14 +374,7 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore
-      })).map(u => {
-        const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
-        return {
-          ...u,
-          tipologia: match?.tipologia || u.tipologia,
-          apl: match?.apl || u.apl
-        };
-      });
+      }))
       
        if (originalData.length > 1) {
         const righeDaOrdinare = originalData.slice(0, -1);
@@ -406,22 +398,24 @@ async function processData(data, source) {
         distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
         oretotmese: row["ORE_LAV_MESE"] || "",
         buonoservizio: row["ORE IN BUONO"] || 0,
-        tariffa: "14.00",
+        "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
+        "Codice Fiscale Cliente": row["CODICE FISCALE BENEFICIARIO"] || "",
+        "Data di Nascita Cliente": formatDateIfValid(row["DATA NASCITA BENEFICIARIO"]),
       }));
       console.log("✅ Dati Synergie processati:", dataWithSource.slice(0, 2));
       allData = [...allData, ...dataWithSource];
 
       const minimalData = dataWithSource.map(row => ({
-        descrizione: `${row["NOME BENEFICIARIO"] || ""} ${row["COGNOME BENEFICIARIO"] || ""}`,
+        descrizione: row["FIRMATARIO"] || " ",
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
         distretto: row["CIRC."] || "Non specificato",
         oretotmese: row["ORE_LAV_MESE"] || "",
         buonoservizio: row["ORE IN BUONO"] || 0,
-        tariffa: (row["ORE_LAV_MESE"] && row["ORE IN BUONO"] && row["ORE IN BUONO"] !== 0) 
-          ? (row["ORE_LAV_MESE"] / row["ORE IN BUONO"]).toFixed(2) 
-          : 0,
+        "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
+        "Codice Fiscale Cliente": row["COD. FISCALE BENEFICIARIO"] || "",
+        "Data di Nascita Cliente": row["DATA NASCITA BENEFICIARIO"],
       }));
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -467,14 +461,7 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore
-      })).map(u => {
-        const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
-        return {
-          ...u,
-          tipologia: match?.tipologia || u.tipologia,
-          apl: match?.apl || u.apl
-        };
-      });
+      }))
       
        if (originalData.length > 1) {
         const righeDaOrdinare = originalData.slice(0, -1);
@@ -499,9 +486,9 @@ async function processData(data, source) {
         distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
         oretotmese: row["Ore_Lav_Mese"] || "",
         buonoservizio: row["Ore_Inbuono"] || 0,
-        tariffa: "14.00",
+        "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
       }));
-      console.log("✅ Dati Umana processati:", dataWithSource.slice(0, 2));
+      console.log("✅ Dati Umana processati:", dataWithSource);
       allData = [...allData, ...dataWithSource];
 
       const minimalData = dataWithSource.map(row => ({
@@ -512,7 +499,7 @@ async function processData(data, source) {
         distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
         oretotmese: row["Ore_Lav_Mese"] || "",
         buonoservizio: row["Ore_Inbuono"] || 0,
-        tariffa: "14.00",
+        "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
       }));
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -558,14 +545,7 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore
-      })).map(u => {
-        const match = dataWithSource.find(r => r.descrizione === u.Descrizione);
-        return {
-          ...u,
-          tipologia: match?.tipologia || u.tipologia,
-          apl: match?.apl || u.apl
-        };
-      });
+      }))
       
        if (originalData.length > 1) {
         const righeDaOrdinare = originalData.slice(0, -1);
