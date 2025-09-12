@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 import json
 import logging
 from .models import Utente
+from .models import Tariffa
 from datetime import datetime, timedelta
 from django.shortcuts import render
 import re
@@ -51,6 +52,7 @@ def salva_dati(request):
         if not nome:
             logger.warning(f"Riga saltata (nessun nome identificativo): {row}")
             continue  # salta righe senza identificativo
+        tariffa_val = get_tariffa(row.get("apl") or row.get("tipologia"))
 
         # Data di riferimento se presente
         intestazione = next(
@@ -106,9 +108,9 @@ def salva_dati(request):
             "data_riferimento": data_riferimento,
             "oretotmese": row.get("oretotmese", 0),
             "buonoservizio": row.get("buonoservizio", 0),
-            "tariffa": row.get("tariffa", 0),
-
+            "tariffa": tariffa_val or 0,
         }
+        print(f"Tariffa per dopo defoult {nome}: {tariffa_val}{defaults["tariffa"]}")
 
         # aggiorno tipologia e apl solo se arrivano valorizzati
         if tipologia:
@@ -181,6 +183,28 @@ def salva_dati(request):
 
     return JsonResponse({"status": "ok"})
 
+@csrf_exempt
+@require_POST
+def salva_tariffe(request):
+    try:
+        data = json.loads(request.body)
+        for prestazione, valore in data.items():
+            Tariffa.objects.update_or_create(
+                tipologia=prestazione,
+                defaults={"valore": valore}
+            )
+        print(data)
+
+        return JsonResponse({"status": "ok", "message": "Tariffe salvate"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    
+
+def get_tariffa(prestazione):
+    try:
+        return Tariffa.objects.get(tipologia=prestazione).valore
+    except Tariffa.DoesNotExist:
+        return 0
 
 @csrf_exempt
 @require_POST
@@ -194,5 +218,8 @@ def reset_utenti(request):
 def lista_utenti(request):
     utenti = list(Utente.objects.values())
     return JsonResponse(utenti, safe=False)
+def lista_tariffe(request):
+    tariffe = list(Tariffa.objects.values("tipologia", "valore"))
+    return JsonResponse(tariffe, safe=False)
 def home(request):
     return render(request, 'index.html')    

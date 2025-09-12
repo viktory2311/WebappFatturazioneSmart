@@ -26,7 +26,7 @@ window.onload = () => {
             //populateUtenteFilter();
             //applyFilters();
             //}
-
+          caricaTariffe();      
 
           // ---- Qui inseriamo il fetch dai server ----
             fetch("/utenti/")
@@ -239,14 +239,10 @@ async function processData(data, source) {
         ...row,
         tipologia: "OSS",
         apl: deriveAPL(source),
+        buonoservizio: row["BUONO SERVIZIO"] || 0,
+
       }));
       aggiornaMeseDaHeader(ossData);
-
-      if (ossData.length > 1) {
-        const righeDaOrdinare = ossData.slice(0, -1);
-        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
-        ossData = [...righeDaOrdinare, ossData[ossData.length - 1]];
-      }
 
       const res = await fetch("/salva/", {
         method: "POST",
@@ -256,7 +252,55 @@ async function processData(data, source) {
       const savedData = await res.json();
       console.log("✅ Dati OSS salvati:", savedData);
 
-      populateTable(ossData);
+      let utentiRes = await fetch("/utenti/");
+      let utentiData = await utentiRes.json();
+
+      // Mappo dati DB → frontend
+      originalData = utentiData.map(u => ({
+        "Descrizione": u.nome,
+        "Data di Nascita Cliente": formatDateIfValid(u.data_nascita),
+        "Indirizzo Cliente": u.indirizzo,
+        "Codice Fiscale Cliente": u.codice_fiscale,
+        "Assistenza Domiciliare Integrata": u.assistenza_domiciliare_integrata,
+        "Anziano Autosufficiente": u.anziano_autosufficiente,
+        "Anziano Non Autosufficiente": u.anziano_non_autosufficiente,
+        "Contratti Privati": u.contratti_privati,
+        "Disabile": u.disabile,
+        "Distretto Nord": u.distretto_nord,
+        "Distretto Sud": u.distretto_sud,
+        "Emergenza Caldo ASL": u.emergenza_caldo_asl,
+        "Emergenza Caldo Comune": u.emergenza_caldo_comune,
+        "HCP": u.hcp,
+        "Minori Disabili Gravi": u.minori_disabili_gravi,
+        "Nord Ovest": u.nord_ovest,
+        "PNRR": u.pnrr,
+        "Progetto SOD": u.progetto_sod,
+        "Sud Est": u.sud_est,
+        "Sud Ovest": u.sud_ovest,
+        "Ufficio": u.ufficio,
+        "C - UFFICIO VIA TESSO": u.via_tesso,
+        "Data": u.data_riferimento,
+        "tipologia": u.tipologia,
+        "apl": u.apl,
+        "oretotmese":u.oretotmese,
+        "buonoservizio":u.buonoservizio,
+        "tariffa": u.tariffa,
+        "Totale": u.totale_ore
+      })).map(u => {
+        const match = ossData.find(r => r.descrizione === u.Descrizione);
+        return {
+          ...u,
+          tipologia: match?.tipologia || u.tipologia,
+          apl: match?.apl || u.apl
+        };
+      });
+      
+       if (originalData.length > 1) {
+        const righeDaOrdinare = originalData.slice(0, -1);
+        righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
+        originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
+      }
+      populateTable(originalData);
       populateUtenteFilter();
 
       if (confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?")) {
@@ -736,9 +780,10 @@ function populateTable(data) {
 
     const tipologia = row.tipologia || row["TIPOLOGIA"] || ""; 
     const apl = row.apl || "";
-
+    const tariffa = row.tariffa || "1.11";
+    console.log("Stampa di Tariffa 🌿:",tariffa);
     const oreTotMese = row.oretotmese || row["ORE_LAV_MESE"] || "";
-    console.log("Stampa di Ore TOTALI 🌿:",row.oreTotMese);
+    //console.log("Stampa di Ore TOTALI 🌿:",row.oreTotMese);
     //console.log("Stampa di APL 🌿:",row.apl);
 
     // INSERIMENTO TOTALE ORE DEL MESE
@@ -746,7 +791,7 @@ function populateTable(data) {
     const totaleFormattato = totaleOre.toFixed(2);
 
     const ore = parseFloat(row.Ore) || 0;
-    const tariffa = parseFloat(row.Tariffa) || 0;
+    //const tariffa = parseFloat(row.Tariffa) || 0;
     const importo = ore * tariffa;
     totaleUtenti++;
     
@@ -1102,10 +1147,7 @@ async function exportExcel() {
       case 'anziani_non_autosufficenti':
         // Verifica solo se apl è vuoto o null if (aplValue === " " || aplValue === null || aplValue === undefined) { aplValue = 'Valore non disponibile'; } 
         console.log("APL Value prima di dettaglio:", row.apl);  // Verifica che il valore sia corretto
-        row.tariffa = parseFloat(row.tariffa).toFixed(2);
-        if(tipologiaValue === "OSS"){
-          row.tariffa = parseFloat("24.00").toFixed(2);;
-        }
+        row.tariffa = parseFloat(row.tariffa).toFixed(2) || 0;
         const totaleFatturato = "€ " + parseFloat(row.tariffa * row.totaleFormattato).toFixed(2);
         /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
           row.totaleFormattato --> Totale Ore Erogate
@@ -1210,12 +1252,53 @@ async function exportExcel() {
 
 /*--- FINE ---*/
 
+function caricaTariffe() {
+  fetch(`/tariffe/?_=${Date.now()}`)  // cache-buster
+    .then(r => r.json())
+    .then(data => {
+      data.forEach(t => {
+        let cell = document.querySelector(`#tabella-prezzi td[data-prestazione="${t.tipologia}"]`);
+        if (cell) cell.innerText = parseFloat(t.valore).toFixed(2).replace(".", ",");
+      });
+    })
+    .catch(err => console.error("Errore caricando tariffe:", err));
+}
 
+// Salva le tariffe modificate
+function salvaTariffe() {
+  let dati = {};
+  document.querySelectorAll("#tabella-prezzi td[data-prestazione]").forEach(cell => {
+    dati[cell.dataset.prestazione] = parseFloat(cell.innerText.trim());
+  });
 
+  fetch("/tariffe/salva/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dati)
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === "ok") {
+      alert("✅ Prezzi salvati su server!");
+      location.reload();
+    } else {
+      alert("❌ Errore: " + res.message);
+    }
+  });
+}
 
-
-
-
+function validateNumberInput(cell){
+let text = cell.innerText.trim().replace(',', '.'); 
+let num = parseFloat(text);
+if (isNaN(num) || num < 0 || num > 1000) {
+    alert("❌ Inserisci un valore tra 0 e 1000");
+    cell.innerText = "0.00";
+  } else {
+    cell.innerText = num.toFixed(2);
+  }
+}
 
 
 

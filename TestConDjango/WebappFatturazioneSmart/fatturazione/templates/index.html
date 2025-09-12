@@ -77,7 +77,7 @@
 
 
     <!-- SEZIONE DATI -->
-  <div id="dati" class="page active">
+  <div id="dati" class="page">
       <div class="d-flex" style="height:100vh;">  
       <!-- Sidebar Filtri -->
       <aside class="bg-light border-end p-3" style="width:280px;">
@@ -184,7 +184,38 @@
   </div>
 
     <!-- SEZIONE FATTURE -->
-      <div id="fatture" class="page">
+      <div id="fatture" class="page active">
+        <h2>💰 Prezzi aggiornati</h2>
+
+  <table id="tabella-prezzi" class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Prestazione</th>
+        <th>Prezzo (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Synergie</td>
+        <td contenteditable="true" data-prestazione="Synergie"></td>
+      </tr>
+      <tr>
+        <td>Gigroup</td>
+        <td contenteditable="true" data-prestazione="Gigroup"></td>
+      </tr>
+      <tr>
+        <td>Umana</td>
+        <td contenteditable="true" data-prestazione="Umana"></td>
+      </tr>
+      <tr>
+        <td>OSS</td>
+        <td contenteditable="true" data-prestazione="OSS" onblur="validateNumberInput(this)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button class="btn btn-success mt-2" onclick="salvaTariffe()">💾 Salva Prezzi</button>
+
     <h2>Genera Fattura:</h2>
 
     <!-- Selezione tipo fattura -->
