@@ -198,16 +198,34 @@ def salva_dati(request):
 @require_POST
 def salva_tariffe(request):
     try:
-        data = json.loads(request.body)
-        for prestazione, valore in data.items():
+        print("Dati ricevuti nella richiesta:", request.body)
+
+        payload = json.loads(request.body)
+        dati = payload.get("dati", [])
+
+        for item in dati:
+            prestazione = item.get("prestazione")
+            apl = item.get("apl", "")
+            valore = item.get("valore")
+
+            if prestazione is None or valore is None:
+                continue  # ignora record incompleti
+
             # aggiorna la tabella Tariffa
             tariffa, _ = Tariffa.objects.update_or_create(
                 tipologia=prestazione,
+                apl=apl,   # solo se Tariffa ha anche il campo 'apl'
                 defaults={"valore": valore}
             )
-            
-            # aggiorna anche tutti gli utenti che hanno quella tipologia
-            Utente.objects.filter(tipologia=prestazione).update(tariffa=valore)
+            print(f"Aggiornata tariffa: {prestazione} - {apl} = {valore}")
+
+            print("Filtro utenti:", prestazione, apl)
+            utenti = Utente.objects.filter(tipologia=prestazione, apl=apl)
+            print("Utenti trovati:", utenti.count())
+            utenti.update(tariffa=valore)
+
+            # aggiorna anche tutti gli utenti che hanno quella tipologia + apl
+            #Utente.objects.filter(tipologia=prestazione, apl=apl).update(tariffa=valore)
 
         return JsonResponse({"status": "ok", "message": "Tariffe salvate"})
     except Exception as e:
@@ -232,7 +250,7 @@ def lista_utenti(request):
     utenti = list(Utente.objects.values())
     return JsonResponse(utenti, safe=False)
 def lista_tariffe(request):
-    tariffe = list(Tariffa.objects.values("tipologia", "valore"))
+    tariffe = list(Tariffa.objects.values("tipologia","apl","valore"))
     return JsonResponse(tariffe, safe=False)
 def home(request):
     return render(request, 'index.html')    
