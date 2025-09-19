@@ -9,9 +9,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -24,6 +21,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,3 +69,14 @@ USE_I18N = True
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+
+# Dove verranno raccolti i file statici durante il deploy
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Se hai anche una cartella "static" locale con CSS/JS personalizzati
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
