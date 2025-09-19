@@ -234,7 +234,7 @@ let ossData = [];
 let visualizedData =[];
 // Funzione che processa i dati a seconda della fonte
 async function processData(data, source) {
-  console.log("😁😁 Valore di Source: ");
+  console.log("😁😁 Valore di Source: ",source);
   try {    
     if (source === "oss") {
       let ossData = data.map(row => ({
@@ -297,7 +297,7 @@ async function processData(data, source) {
       }
       populateTable(originalData);
       populateUtenteFilter();
-
+      
       if (confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?")) {
         showPage('dati');
       }
