@@ -1136,17 +1136,22 @@ async function exportExcel() {
       case 'anziani_non_autosufficenti':
         // Verifica solo se apl è vuoto o null if (aplValue === " " || aplValue === null || aplValue === undefined) { aplValue = 'Valore non disponibile'; } 
         console.log("APL Value prima di dettaglio:", row.apl);  // Verifica che il valore sia corretto
-        row.tariffa = parseFloat(row.tariffa).toFixed(2) || 0;
+        row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
+        row.totaleFormattato = row.totaleFormattato.replace('.', ',');
+        totaleFatturato = totaleFatturato.replace('.', ',');
+
+        console.log("Ore Buono Servizio Prima ==> ",  row.buonoservizio);
+
+        //console.log("Ore Buono Servizio ==> ",  row.buonoservizio);
         /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
           row.totaleFormattato --> Totale Ore Erogate
           row.tariffa --> Tariffa oraria(Costo Mensile)
           row.buonoservizio --> Tipo Intervento*/
         dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl, print_distretto]; 
-        //console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
+        console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
    break;
       case 'anziani_autosufficenti':
-        
         dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
         break;
       case 'disabili':
@@ -1265,9 +1270,9 @@ nordWorksheet.addRow(["Descrizione", "costo orario", "ore", "totale", "fattura n
 Object.values(riepilogo).forEach(item => {
   let row = nordWorksheet.addRow([
     item.descrizione,
-    "€ " + item.costoOrario.toFixed(2).replace(",", "."),
-    item.ore.toFixed(2).replace(",", "."),
-    "€ " + item.totale.toFixed(2).replace(",", "."),
+    "€ " + item.costoOrario.toFixed(2).replace(".", ","),
+    item.ore.toFixed(2).replace(".", ","),
+    "€ " + item.totale.toFixed(2).replace(".", ","),
     item.fattura
   ]);
   row.eachCell(cell => {
@@ -1404,7 +1409,7 @@ function salvaTariffe() {
 
 
 function validateNumberInput(cell){
-let text = cell.innerText.trim().replace(',', '.'); 
+let text = cell.innerText.trim().replace('.', ','); 
 let num = parseFloat(text);
 if (isNaN(num) || num < 0 || num > 1000) {
     alert("❌ Inserisci un valore tra 0 e 1000");

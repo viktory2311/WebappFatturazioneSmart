@@ -234,7 +234,7 @@ let ossData = [];
 let visualizedData =[];
 // Funzione che processa i dati a seconda della fonte
 async function processData(data, source) {
-  console.log("😁😁 Valore di Source: ");
+  console.log("😁😁 Valore di Source: ",source);
   try {    
     if (source === "oss") {
       let ossData = data.map(row => ({
@@ -297,7 +297,7 @@ async function processData(data, source) {
       }
       populateTable(originalData);
       populateUtenteFilter();
-
+      
       if (confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?")) {
         showPage('dati');
       }
@@ -1137,12 +1137,15 @@ async function exportExcel() {
         // Verifica solo se apl è vuoto o null if (aplValue === " " || aplValue === null || aplValue === undefined) { aplValue = 'Valore non disponibile'; } 
         console.log("APL Value prima di dettaglio:", row.apl);  // Verifica che il valore sia corretto
         row.tariffa = parseFloat(row.tariffa).toFixed(2) || 0;
+        console.log("Ore Buono Servizio Prima ==> ",  row.buonoservizio);
+        row.buonoservizio = row.buonoservizio.replace(",", ".");
+        console.log("Ore Buono Servizio ==> ",  row.buonoservizio);
         /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
           row.totaleFormattato --> Totale Ore Erogate
           row.tariffa --> Tariffa oraria(Costo Mensile)
           row.buonoservizio --> Tipo Intervento*/
         dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl, print_distretto]; 
-        //console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
+        console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
    break;
       case 'anziani_autosufficenti':
