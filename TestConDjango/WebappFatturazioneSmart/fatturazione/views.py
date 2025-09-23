@@ -114,6 +114,7 @@ def salva_dati(request):
                 "oretotmese": row.get("oretotmese", 0),
                 "buonoservizio": row.get("buonoservizio", 0),
                 "tariffa": tariffa_val or 0,
+                "descrizionetipologia": row.get("descrizionetipologia",0),
             }
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
 

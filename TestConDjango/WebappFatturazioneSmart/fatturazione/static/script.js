@@ -315,6 +315,8 @@ async function processData(data, source) {
         tariffa: row["TARIFFA"] || 0,
         indirizzo: row["Descrizione circoscrizione"] || "",
         codice_fiscale: row["CODICE FISCALE"] || "",
+        descrizionetipologia: row["Descrizione tipologia"] || "",
+
       }));
 
       allData = [...allData, ...dataWithSource];
@@ -373,7 +375,8 @@ async function processData(data, source) {
         "oretotmese":u.oretotmese,
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
-        "Totale": u.totale_ore
+        "Totale": u.totale_ore,
+        "descrizionetipologia": u.descrizionetipologia
       }))
       
        if (originalData.length > 1) {
@@ -739,8 +742,8 @@ function populateTable(data) {
     const codiceFiscale = row.CodiceFiscale || row["Codice Fiscale Cliente"] || "";
     // INSERIMENTO DA COLLONNA C-ADI FINO MINORI DISABILI GRAVI
     const assistenzaDomiciliareIntegrata = row["Assistenza Domiciliare Integrata"] || row["C-ADI"] || "";
-    const anianoAutosuficente = row["Anziano Autosufficiente"] || row["C - Anziano autosufficiente"] || "";
-    const anianoNonAutosuficente = row["Anziano Non Autosufficiente"] || row["C - Anziano non autosufficiente"] || "";
+    const anzianoAutosuficente = row["Anziano Autosufficiente"] || row["C - Anziano autosufficiente"] || "";
+    const anzianoNonAutosuficente = row["Anziano Non Autosufficiente"] || row["C - Anziano non autosufficiente"] || "";
     const contrattiPrivati = row["Contratti Privati"] || row["C - Contratti privati"] || "";
     const disabile = row["Disabile"] || row["C - Disabile"] || "";
     const distrettoNord = row["Distretto Nord"] || row["C - DISTRETTO NORD"] || "0.00";
@@ -782,8 +785,8 @@ function populateTable(data) {
         indirizzo,
         codiceFiscale,
         assistenzaDomiciliareIntegrata: assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : "0.00",
-        anianoAutosuficente: anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : "0.00",
-        anianoNonAutosuficente: anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : "0.00",
+        anzianoAutosuficente: anzianoAutosuficente ? parseFloat(anzianoAutosuficente).toFixed(2) : "0.00",
+        anzianoNonAutosuficente: anzianoNonAutosuficente ? parseFloat(anzianoNonAutosuficente).toFixed(2) : "0.00",
         contrattiPrivati: contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00",
         disabile: disabile ? parseFloat(disabile).toFixed(2) : "0.00",
         distrettoNord: distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00",
@@ -803,6 +806,7 @@ function populateTable(data) {
         buonoservizio: row.buonoservizio,
         tariffa: row.tariffa,
         totaleFormattato,
+        descrizionetipologia: row.descrizionetipologia,
       });
       //console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
     //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
@@ -820,8 +824,8 @@ function populateTable(data) {
       <td>${indirizzo}</td>
       <td>${codiceFiscale}</td>
       <td>${assistenzaDomiciliareIntegrata ? parseFloat(assistenzaDomiciliareIntegrata).toFixed(2) : "0.00"}</td>
-      <td>${anianoAutosuficente ? parseFloat(anianoAutosuficente).toFixed(2) : "0.00"}</td>
-      <td>${anianoNonAutosuficente ? parseFloat(anianoNonAutosuficente).toFixed(2) : "0.00"}</td>
+      <td>${anzianoAutosuficente ? parseFloat(anzianoAutosuficente).toFixed(2) : "0.00"}</td>
+      <td>${anzianoNonAutosuficente ? parseFloat(anzianoNonAutosuficente).toFixed(2) : "0.00"}</td>
       <td>${contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00"}</td>
       <td>${disabile ? parseFloat(disabile).toFixed(2) : "0.00"}</td>
       <td>${distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00"}</td>
@@ -1090,8 +1094,19 @@ async function exportExcel() {
 
     // Aggiungere "Anziani non autosufficenti" per il tipo di fattura "anziani_non_autosufficenti, cosa simile per gli altri file"
     let tipoUtenza ="";
+    console.log("🙌Valore Descrizione Tipologia  ==> ", row.descrizionetipologia);
+    if(row.anzianoAutosuficente > 0)
+    {
+      tipoUtenza = "anziani_autosufficenti";
+    }else if(row.anzianoNonAutosuficente > 0){
+      tipoUtenza = "anziani_non_autosufficienti";
+    }else if(row.minoriDisabiliGravi > 0){
+      tipoUtenza = "minori_disabili_gravi";
+    }else if(row.disabile > 0){
+      tipoUtenza = "disabile";
+    }
 
-    switch (tipoFattura) {
+    /*switch (tipoFattura) {
       case 'anziani_non_autosufficenti':  tipoUtenza = "anziani_non_autosufficenti"; break;
       case 'anziani_autosufficenti':  tipoUtenza = "anziani_autosufficenti"; break;
       case 'disabili':  tipoUtenza = "disabili"; break;
@@ -1099,7 +1114,7 @@ async function exportExcel() {
       case 'emergenza_caldo':  tipoUtenza = "emergenza_caldo"; break;
        default: tipoUtenza = "Non Specificato"; break;
 
-    }
+    }*/
 
     // Verifica a quale distretto appartiene la riga
     const isNord = distrettoNord !== "0.00" || nordOvest !== "0.00"; // Include il Nord se uno dei distretti Nord è valorizzato

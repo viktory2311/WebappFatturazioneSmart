@@ -33,6 +33,8 @@ class Utente(models.Model):
     oretotmese = models.FloatField(default=0)
     buonoservizio = models.FloatField(default=0)
     tariffa =  models.FloatField(default=0)
+    descrizionetipologia = models.CharField(max_length=16, blank=True)
+
 
     totale_ore = models.FloatField(default=0)
 
