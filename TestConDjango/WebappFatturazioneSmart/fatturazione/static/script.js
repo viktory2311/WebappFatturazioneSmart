@@ -1154,7 +1154,7 @@ async function exportExcel() {
         row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
         row.totaleFormattato = row.totaleFormattato.replace('.', ',');
         totaleFatturato = totaleFatturato.replace('.', ',');
-        console.log("Ore Buono Servizio ==> ",  row.buonoservizio);
+        //console.log("Ore Buono Servizio ==> ",  row.buonoservizio);
         /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
           row.totaleFormattato --> Totale Ore Erogate
           row.tariffa --> Tariffa oraria(Costo Mensile)
