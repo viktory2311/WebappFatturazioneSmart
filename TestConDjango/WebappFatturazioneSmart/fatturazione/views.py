@@ -117,6 +117,7 @@ def salva_dati(request):
                 "descrizionetipologia": row.get("descrizionetipologia",0),
             }
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
+            print(f"Descrizione tipologia: {defaults['descrizionetipologia']}")
 
             # aggiorno tipologia e apl solo se arrivano valorizzati
             if tipologia:
