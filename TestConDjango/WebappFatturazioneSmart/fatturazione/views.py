@@ -99,7 +99,7 @@ def salva_dati(request):
                 "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL"),
                 "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE"),
                 "hcp": parse_float("HCP", "C - HCP"),
-                "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori disabili gravi"),
+                "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori Disabili Gravi"),
                 "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
                 "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
                 "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
@@ -117,7 +117,8 @@ def salva_dati(request):
                 "descrizionetipologia": row.get("descrizionetipologia",0),
             }
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
-            print(f"Descrizione tipologia: {defaults['descrizionetipologia']}")
+            #IL print qui sotto serve per debug delle tipologie non mappate delle APL
+            #print(f"Descrizione tipologia: {defaults['descrizionetipologia']}")
 
             # aggiorno tipologia e apl solo se arrivano valorizzati
             if tipologia:

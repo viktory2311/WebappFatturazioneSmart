@@ -246,19 +246,21 @@ async function processData(data, source) {
 
       }));
       aggiornaMeseDaHeader(ossData);
-
+      //console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
+      //console.log("✅ Dati OSS processati:", ossData);
+      //console.log("Formatro dati Inviati ==>", ossData);
       const res = await fetch("/salva/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ossData)
       });
       const savedData = await res.json();
-      const rigaTapperoBarbara = ossData.find(row => row.Descrizione === "TAPPERO BARBARA");
+      /*const rigaTapperoBarbara = ossData.find(row => row.Descrizione === "CRISPINO MAURO");
       if (rigaTapperoBarbara) {
           console.log("Dati Inviati", rigaTapperoBarbara);
       } else {
           console.log("Nessuna riga trovata con descrizione 'TAPPERO BARBARA'");
-      }
+      }*/
       console.log("✅ Dati OSS salvati:", savedData);
 
       let utentiRes = await fetch("/utenti/");
@@ -1101,11 +1103,11 @@ async function exportExcel() {
     //console.log("➡️ Chiavi della riga:", Object.keys(row)); // Mostra tutte le proprietà
     //console.log("✅ APL:", row.apl, "TIPOLOGIA:", row.tipologia); // Mostra i valori
 
-    const distrettoNord = row.distrettoNord || "0.00";
-    const distrettoSud = row.distrettoSud || "0.00";
-    const nordOvest = row.nordOvest || "0.00";
-    const sudEst = row.sudEst || "0.00";
-    const sudOvest = row.sudOvest || "0.00";
+    const distrettoNord = row.distrettoNord || 0.00;
+    const distrettoSud = row.distrettoSud || 0.00;
+    const nordOvest = row.nordOvest || 0.00;
+    const sudEst = row.sudEst || 0.00;
+    const sudOvest = row.sudOvest || 0.00;
 
     // Aggiungere "Anziani non autosufficenti" per il tipo di fattura "anziani_non_autosufficenti, cosa simile per gli altri file"
     
@@ -1172,14 +1174,16 @@ async function exportExcel() {
     "ANZ_NON_AUTO": "anziani_non_autosufficienti",
     "DISABILE": "disabili",
     "ANZ_AUTO": "anziani_autosufficienti",
+    "MINORI": "minori_disabili_gravi",
+    "EMERGENZA CALDO": "emergenza_caldo",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     //console.log("🙌Valore Apl  ==> ", row.apl, "🙌Valore tipoUtenza  ==> ",  mappaTipologia[row.descrizionetipologia] === "ANZ_AUTO" );
     }
-    if(tipoUtenza === "tipo_utenza_non_definito")
+    /*if(tipoUtenza === "tipo_utenza_non_definito")
       {
             console.log("Nome Utente Senza Utenza ===>", row.descrizione, "APL ==>", row.apl , "Tipologia Valore ==> ", tipologiaValue);          
-      }
+      }*/
     if (tipoFattura === tipoUtenza) {
         // Definisci la riga di dati in base al tipo di fattura
         switch (tipoFattura) {
@@ -1189,6 +1193,7 @@ async function exportExcel() {
             row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
             row.totaleFormattato = row.totaleFormattato.replace('.', ',');
             totaleFatturato = totaleFatturato.replace('.', ',');
+            row.buonoservizio = String(row.buonoservizio || "").replace('.', ',');
             //console.log("Ore Buono Servizio ==> ",  row.buonoservizio);
             /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
               row.totaleFormattato --> Totale Ore Erogate
@@ -1224,11 +1229,6 @@ async function exportExcel() {
             dataRow = [row.descrizione, row.dataNascita, row.indirizzo, row.codiceFiscale, print_distretto];
             break;
         }
-    } else {
-      console.warn("⚠️ Il bottone premuto non corrisponde al tipo di utenza della riga");
-    }
-
-
   let count = 0;
     if (isNord) {
       const row = nordWorksheet.addRow(dataRow);
@@ -1276,6 +1276,17 @@ async function exportExcel() {
       });
     } else if (isSud) {
       const row = sudWorksheet.addRow(dataRow);
+       if (sudWorksheet.rowCount % 2 === 0) {
+                // Se il numero della riga è pari, la riga sarà verde
+                row.eachCell((cell) => {
+                  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "B0FFB6" } }; // Verde
+                });
+              } else {
+                // Se il numero della riga è dispari, la riga sarà bianca
+                row.eachCell((cell) => {
+                  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFF" } }; // Bianco
+                });
+              }
       //console.log("📈 Riga aggiunta a Sud:", row.values); // Controlla i valori della riga aggiunta
       row.eachCell((cell, colNumber) => {
         if (colNumber > 1) {
@@ -1298,6 +1309,9 @@ async function exportExcel() {
                   right: { style: 'thin', color: { argb: '000000' } }
                 };
       });
+    }
+    } else {
+      console.warn("⚠️ Il bottone premuto non corrisponde al tipo di utenza della riga");
     }
   });
 
@@ -1353,9 +1367,9 @@ sudWorksheet.addRow(["Descrizione", "costo orario", "ore", "totale", "fattura n.
 Object.values(riepilogo).forEach(item => {
   let row = sudWorksheet.addRow([
     item.descrizione,
-    "€ " + item.costoOrario.toFixed(2).replace(",", "."),
-    item.ore.toFixed(2).replace(",", "."),
-    "€ " + item.totale.toFixed(2).replace(",", "."),
+    "€ " + item.costoOrario.toFixed(2).replace(".", ","),
+    item.ore.toFixed(2).replace(".", ","),
+    "€ " + item.totale.toFixed(2).replace(".", ","),
     item.fattura
   ]);
   row.eachCell(cell => {
