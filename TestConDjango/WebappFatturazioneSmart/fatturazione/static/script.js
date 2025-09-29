@@ -319,15 +319,20 @@ async function processData(data, source) {
         apl: deriveAPL(source),
         tipologia: row["TIPOLOGIA"] || "",
         distretto: row["Distretto"] || "Non specificato",
-        oretotmese: row["ORE ENTE"] || "",
-        buonoservizio: row["BUONO SERVIZIO"] || 0,
+        oretotmese: row["ORE ENTE"] || row["ORE"] || "",
+        buonoservizio: row["BUONO SERVIZIO"] || row["ORE BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
         indirizzo: row["Descrizione circoscrizione"] || "",
         codice_fiscale: row["CODICE FISCALE"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
 
       }));
-
+      const rigaTapperoBarbara = dataWithSource.find(row => row.descrizione === "ADAMO DOMENICO");
+      if (rigaTapperoBarbara) {
+          console.log("Dati Inviati", rigaTapperoBarbara);
+      } else {
+          console.log("Nessuna riga trovata con descrizione 'ADAMO DOMENICO'");
+      }
       allData = [...allData, ...dataWithSource];
 
       const minimalData = dataWithSource.map(row => ({
@@ -335,15 +340,15 @@ async function processData(data, source) {
         tipologia: row.tipologia || row["TIPOLOGIA"] || "",
         apl: row.apl || "",
         distretto: row["Distretto"] || "Non specificato",
-        oretotmese: row["ORE ENTE"] || 0,
-        buonoservizio: row["BUONO SERVIZIO"] || 0,
+        oretotmese: row["ORE ENTE"] || row["ORE"] || 0,
+        buonoservizio: row["BUONO SERVIZIO"] || row["ORE BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
         "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
         "Codice Fiscale Cliente": row["CODICE FISCALE"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
       }));
 
-      console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
+      console.log("📤 Invio al server solo tipologia e apl:", minimalData);
       
       // Salva i dati e poi carica utenti aggiornati
       await fetch("/salva/", {
@@ -867,7 +872,7 @@ function populateTable(data) {
 
   const totaleUtentiElement = document.getElementById("totaleUtenti");
   if(totaleUtentiElement){
-    totaleUtentiElement.textContent = 'Totale Utenti: ' + totaleUtenti
+    totaleUtentiElement.textContent = 'Totale Utenti: ' + totaleUtenti;
   }
 }
 /* FUNZIONI USATE PER GESTIONE POPOLAZIONE TABELLA */
@@ -1168,6 +1173,7 @@ async function exportExcel() {
     "ANZIANI NON AUTOSUFFICIENTI": "anziani_non_autosufficienti",
     "MINORI DISABILI GRAVI": "minori_disabili_gravi",
     "DISABILI": "disabili",
+    "DISABILE": "disabili",
     "Disabili": "disabili",
     "Anziani non Auto": "anziani_non_autosufficienti",
     "Minori Disabili Gravi": "minori_disabili_gravi",

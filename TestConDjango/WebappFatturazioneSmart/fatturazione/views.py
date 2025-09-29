@@ -81,14 +81,9 @@ def salva_dati(request):
                             logger.warning(f"Errore convertendo {key}='{val}' in float: {e}")
                             return 0
                 return 0
-
-            # Recupera l'utente se esiste già   
-            utente = Utente.objects.filter(
-                nome=nome.strip(),
-                tipologia=tipologia,
-                apl=apl
-            ).first()
-
+            codice_fiscale = (row.get("Codice Fiscale Cliente") or "").strip()
+            utente = Utente.objects.all()
+            #print(list(Utente.objects.all().values()))
             # defaults comuni (non anagrafici)
             defaults = {
                 "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI"),
@@ -161,39 +156,16 @@ def salva_dati(request):
 
                 if distretto_value:
                     defaults["distretto"] = distretto_value       
-            # ora aggiorno/creo l’utente
-            if utente:
-                # aggiorno SOLO i campi con valore utile
-                codice_fiscale = row.get("Codice Fiscale Cliente")
-                global DEBUG_COUNT
-                
-                if "SPROVIERI" in nome.upper():
-                    print("=" * 30)
-                    print("=== ROW ORIGINALE ===") 
-                    print(row)
-                    print("=" * 60)
-                    print(f"Salvataggio utente: {codice_fiscale}")
-                    print("Campi distretto:")
-                    for k in ["distretto", "distretto_nord", "distretto_sud", "nord_ovest", "sud_ovest", "sud_est"]:
-                        print(f"  {k}: {defaults.get(k)}")
-                    print("=" * 60)
-                for k, v in defaults.items():
-                    if v not in (None, "", 0):  
-                        setattr(utente, k, v)
-                utente.save()
-                #print(f"Aggiornato utente esistente: {nome.strip()}")
-            else:
-                    # creo SEMPRE un nuovo record se quella combinazione non esiste già
-                    clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}
-                    # rimuovo tipologia e apl per evitare conflitti
-                    clean_defaults.pop("tipologia", None)
-                    clean_defaults.pop("apl", None)
-                    utente = Utente.objects.create(
-                        nome=nome.strip(),
-                        tipologia=tipologia,
-                        apl=apl,
-                        **clean_defaults
-                    )
+                clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}
+                # Rimuovo le chiavi già passate esplicitamente
+                clean_defaults.pop("tipologia", None)
+                clean_defaults.pop("apl", None)
+                utente = Utente.objects.create(
+                    nome=nome.strip(),
+                    tipologia=tipologia,
+                    apl=apl,
+                    **clean_defaults
+                )           
         return JsonResponse({"status": "ok"})
     except Exception as e:
             logger.exception("Errore durante il salvataggio")
