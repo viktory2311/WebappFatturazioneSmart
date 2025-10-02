@@ -13,6 +13,7 @@ class Utente(models.Model):
     contratti_privati = models.FloatField(default=0)
     disabile = models.FloatField(default=0)
     distretto_nord = models.FloatField(default=0)
+    distretto_nord_est = models.FloatField(default=0)
     distretto_sud = models.FloatField(default=0)
     emergenza_caldo_asl = models.FloatField(default=0)
     emergenza_caldo_comune = models.FloatField(default=0)

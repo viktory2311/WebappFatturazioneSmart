@@ -51,6 +51,7 @@ window.onload = () => {
                                   "Contratti Privati": u.contratti_privati,
                                   "Disabile": u.disabile,
                                   "Distretto Nord": u.distretto_nord,
+                                  "Distretto Nord Est": u.distretto_nord_est,
                                   "Distretto Sud": u.distretto_sud,
                                   "Emergenza Caldo ASL": u.emergenza_caldo_asl,
                                   "Emergenza Caldo Comune": u.emergenza_caldo_comune,
@@ -278,6 +279,7 @@ async function processData(data, source) {
         "Contratti Privati": u.contratti_privati,
         "Disabile": u.disabile,
         "Distretto Nord": u.distretto_nord,
+        "Distretto Nord Est": u.distretto_nord_est,
         "Distretto Sud": u.distretto_sud,
         "Emergenza Caldo ASL": u.emergenza_caldo_asl,
         "Emergenza Caldo Comune": u.emergenza_caldo_comune,
@@ -372,6 +374,7 @@ async function processData(data, source) {
         "Contratti Privati": u.contratti_privati,
         "Disabile": u.disabile,
         "Distretto Nord": u.distretto_nord,
+        "Distretto Nord Est": u.distretto_nord_est,
         "Distretto Sud": u.distretto_sud,
         "Emergenza Caldo ASL": u.emergenza_caldo_asl,
         "Emergenza Caldo Comune": u.emergenza_caldo_comune,
@@ -462,6 +465,7 @@ async function processData(data, source) {
         "Contratti Privati": u.contratti_privati,
         "Disabile": u.disabile,
         "Distretto Nord": u.distretto_nord,
+        "Distretto Nord Est": u.distretto_nord_est,        
         "Distretto Sud": u.distretto_sud,
         "Emergenza Caldo ASL": u.emergenza_caldo_asl,
         "Emergenza Caldo Comune": u.emergenza_caldo_comune,
@@ -504,7 +508,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
+        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || "Non specificato",
         oretotmese: row["Ore_Lav_Mese"] || "",
         buonoservizio: row["Ore_Inbuono"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
@@ -518,7 +522,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
+        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || "Non specificato",
         oretotmese: row["Ore_Lav_Mese"] || "",
         buonoservizio: row["Ore_Inbuono"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
@@ -549,6 +553,7 @@ async function processData(data, source) {
         "Contratti Privati": u.contratti_privati,
         "Disabile": u.disabile,
         "Distretto Nord": u.distretto_nord,
+        "Distretto Nord Est": u.distretto_nord_est,        
         "Distretto Sud": u.distretto_sud,
         "Emergenza Caldo ASL": u.emergenza_caldo_asl,
         "Emergenza Caldo Comune": u.emergenza_caldo_comune,
@@ -769,6 +774,7 @@ function populateTable(data) {
     const contrattiPrivati = row["Contratti Privati"] || row["C - Contratti privati"] || "";
     const disabile = row["Disabile"] || row["C - Disabile"] || "";
     const distrettoNord = row["Distretto Nord"] || row["C - DISTRETTO NORD"] || "0.00";
+    const distrettoNordEst = row["Distretto Nord Est"] || "0.00";
     const distrettoSud = row["Distretto Sud"] || row["C - DISTRETTO SUD"] || "";
     const emergenzaCaldoASL = row["Emergenza Caldo ASL"] || row["C - EMERGENZA CALDO ASL"] || "";
     const emergenzaCaldoComune = row["Emergenza Caldo Comune"] || row["C - EMERGENZA CALDO COMUNE"] || "";
@@ -812,6 +818,7 @@ function populateTable(data) {
         contrattiPrivati: contrattiPrivati ? parseFloat(contrattiPrivati).toFixed(2) : "0.00",
         disabile: disabile ? parseFloat(disabile).toFixed(2) : "0.00",
         distrettoNord: distrettoNord ? parseFloat(distrettoNord).toFixed(2) : "0.00",
+        distrettoNordEst: distrettoNordEst ? parseFloat(distrettoNordEst).toFixed(2) : "0.00",
         distrettoSud: distrettoSud ? parseFloat(distrettoSud).toFixed(2) : "0.00",
         emergenzaCaldoASL: emergenzaCaldoASL ? parseFloat(emergenzaCaldoASL).toFixed(2) : "0.00",
         emergenzaCaldoComune: emergenzaCaldoComune ? parseFloat(emergenzaCaldoComune).toFixed(2) : "0.00",
@@ -1113,6 +1120,7 @@ async function exportExcel() {
     const nordOvest = row.nordOvest || 0.00;
     const sudEst = row.sudEst || 0.00;
     const sudOvest = row.sudOvest || 0.00;
+    const distrettoNordEst = row.distrettoNordEst || 0.00;
 
     // Aggiungere "Anziani non autosufficenti" per il tipo di fattura "anziani_non_autosufficenti, cosa simile per gli altri file"
     
@@ -1128,19 +1136,21 @@ async function exportExcel() {
     }*/
 
     // Verifica a quale distretto appartiene la riga
-    const isNord = distrettoNord !== "0.00" || nordOvest !== "0.00"; // Include il Nord se uno dei distretti Nord è valorizzato
+    const isNord = distrettoNord !== "0.00" || distrettoNordEst !== "0.00" || nordOvest !== "0.00"; // Include il Nord se uno dei distretti Nord è valorizzato
     const isSud = distrettoSud !== "0.00" || sudEst !== "0.00" || sudOvest !== "0.00"; // Include il Sud se uno dei distretti Sud è valorizzato
 
   let tipologiaValue = row.tipologia;
-
     let print_distretto = "";  // Variabile per il nome del distretto
-
     // Se il distretto è legato a Nord
     if (isNord) {
       if (distrettoNord > 0) {
         print_distretto = "Nord";  // Assegna il nome del distretto
       } else if (nordOvest > 0) {
         print_distretto = "Nord Ovest";  // Assegna il nome del distretto Nord Ovest
+      }else if (distrettoNordEst > 0) {
+        print_distretto = "Nord Est";  // Assegna il nome del distretto Nord Ovest
+        console.log("Valore ESt: ", distrettoNordEst);  
+
       }
     }
 
@@ -1184,12 +1194,16 @@ async function exportExcel() {
     "EMERGENZA CALDO": "emergenza_caldo",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
+    if(!meseCompleto){
+      meseCompleto = "Valore non Specificato";
+    }
     //console.log("🙌Valore Apl  ==> ", row.apl, "🙌Valore tipoUtenza  ==> ",  mappaTipologia[row.descrizionetipologia] === "ANZ_AUTO" );
     }
     /*if(tipoUtenza === "tipo_utenza_non_definito")
       {
             console.log("Nome Utente Senza Utenza ===>", row.descrizione, "APL ==>", row.apl , "Tipologia Valore ==> ", tipologiaValue);          
       }*/
+     
     if (tipoFattura === tipoUtenza) {
         // Definisci la riga di dati in base al tipo di fattura
         switch (tipoFattura) {
@@ -1221,6 +1235,7 @@ async function exportExcel() {
             row.totaleFormattato = row.totaleFormattato.replace('.', ',');
             totaleFatturato = totaleFatturato.replace('.', ',');
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
           case 'minori_disabili_gravi':
             row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');

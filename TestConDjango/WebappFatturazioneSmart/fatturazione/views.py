@@ -97,6 +97,7 @@ def salva_dati(request):
                 "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori Disabili Gravi"),
                 "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
                 "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
+                "distretto_nord_est": 0,
                 "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
                 "pnrr": parse_float("PNRR", "C - PNRR"),
                 "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD"),
@@ -141,31 +142,40 @@ def salva_dati(request):
                 elif "sud ovest" in d:
                     distretto_value = "Sud Ovest"
                     defaults["sud_ovest"] = ore
-                elif "sud" in d:
-                    distretto_value = "Sud"
-                    defaults["distretto_sud"] = ore
                 elif "sud est" in d:
                     distretto_value = "Sud Est"
                     defaults["sud_est"] = ore
+                elif "sud" in d:
+                    distretto_value = "Sud"
+                    defaults["distretto_sud"] = ore               
+                elif "nord est" in d:
+                    distretto_value = "Nord Est"
+                    defaults["distretto_nord_est"] = ore                    
                 elif "nord" in d:
                     distretto_value = "Nord"
-                    defaults["distretto_nord"] = ore
+                    defaults["distretto_nord"] = ore              
+                    
                 else:
                     distretto_value = "Non Specificato"
                     defaults["distretto"] = ore
 
                 if distretto_value:
                     defaults["distretto"] = distretto_value       
+                    
                 clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}
                 # Rimuovo le chiavi già passate esplicitamente
                 clean_defaults.pop("tipologia", None)
                 clean_defaults.pop("apl", None)
-                utente = Utente.objects.create(
-                    nome=nome.strip(),
-                    tipologia=tipologia,
-                    apl=apl,
-                    **clean_defaults
-                )           
+                utente, created = Utente.objects.update_or_create(
+                    codice_fiscale=codice_fiscale,
+                    oretotmese=row.get("oretotmese", 0),
+                    defaults={
+                        "nome": nome.strip(),
+                        "tipologia": tipologia,
+                        "apl": apl,
+                        **clean_defaults
+                    }
+                )         
         return JsonResponse({"status": "ok"})
     except Exception as e:
             logger.exception("Errore durante il salvataggio")
