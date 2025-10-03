@@ -162,13 +162,14 @@ def salva_dati(request):
                 if distretto_value:
                     defaults["distretto"] = distretto_value       
                     
-                clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)}
+                clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)} #In Django non perdo i dati per via del filtro if v not in (None, "", 0) prima di fare l’update.
                 # Rimuovo le chiavi già passate esplicitamente
                 clean_defaults.pop("tipologia", None)
                 clean_defaults.pop("apl", None)
                 utente, created = Utente.objects.update_or_create(
                     codice_fiscale=codice_fiscale,
                     oretotmese=row.get("oretotmese", 0),
+                    #nome = nome.strip(), questo è stato usato per testare la riga duplicata di del file synergie dove c'è l'utente Giovanni Incardona
                     defaults={
                         "nome": nome.strip(),
                         "tipologia": tipologia,

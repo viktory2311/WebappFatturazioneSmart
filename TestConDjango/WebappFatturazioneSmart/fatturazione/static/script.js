@@ -1018,8 +1018,16 @@ select_distretto.innerHTML = `
 
 /* ESPORTAZIONE IN FOMATO EXCEL */
 async function exportExcel() {
+
+let tariffa = visualizedData[0]["tariffa"];           // tariffa della prima riga
+let ore = visualizedData[0]["totaleFormattato"];      // ore totali della prima riga
+
+let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
   if (!visualizedData || visualizedData.length === 0) {
     alert("Nessun dato da esportare!");
+    return;
+  }else if (totaleFatturato === "€ 0.00") {
+    alert("Salva i Prezzi delle Tariffe");
     return;
   }
   //console.log("📦 Contenuto visualizedData:", visualizedData);
@@ -1046,7 +1054,7 @@ async function exportExcel() {
     case 'anziani_non_autosufficienti':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl", "Distretto"];
       break;
-    case 'anziani_autosufficenti':
+    case 'anziani_autosufficienti':
       headers = ["Nome e cognome", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     case 'disabili':
@@ -1091,7 +1099,7 @@ async function exportExcel() {
   sudWorksheet.mergeCells(1, 1, 1, headers.length); // Unisci le celle per il mese
   rowMeseSud.height = 30;
   rowMeseSud.eachCell((cell) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFF00" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "48C765" } };
     cell.font = { bold: true, color: { argb: "000000" }, size: 20 };
     cell.alignment = { horizontal: "center", vertical: "middle" };
   });
@@ -1099,7 +1107,7 @@ async function exportExcel() {
   sudWorksheet.addRow(headers);
   const headerRowSud = sudWorksheet.getRow(2);
   headerRowSud.eachCell((cell, colNumber) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "48C765" } };
     cell.font = { bold: true, color: { argb: "000000" } };
     
     // Centra solo le colonne dalla seconda in poi (indice 2)
@@ -1225,7 +1233,9 @@ async function exportExcel() {
           case 'anziani_autosufficienti':
             row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
             row.totaleFormattato = row.totaleFormattato.replace('.', ',');
+            console.log(" 😁😁 Valore TotaleFatturato: ", totaleFatturato );
             totaleFatturato = totaleFatturato.replace('.', ',');
+            console.log(" 😁😁 Valore TotaleFatturato: ", totaleFatturato );
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'disabili':
