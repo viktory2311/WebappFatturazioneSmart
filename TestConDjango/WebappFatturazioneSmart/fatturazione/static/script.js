@@ -1149,8 +1149,6 @@ async function exportExcel() {
         print_distretto = "Nord Ovest";  // Assegna il nome del distretto Nord Ovest
       }else if (distrettoNordEst > 0) {
         print_distretto = "Nord Est";  // Assegna il nome del distretto Nord Ovest
-        console.log("Valore ESt: ", distrettoNordEst);  
-
       }
     }
 
