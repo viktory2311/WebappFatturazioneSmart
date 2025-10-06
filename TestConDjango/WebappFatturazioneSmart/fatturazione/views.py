@@ -85,33 +85,44 @@ def salva_dati(request):
             utente = Utente.objects.all()
             #print(list(Utente.objects.all().values()))
             # defaults comuni (non anagrafici)
+            #print(f"Chiavi disponibili: {row.keys()}")
+
+
+
+            print("\n" + "="*80)
+            print(f"🔹 Nuova riga dal file:")
+            print(json.dumps(row, indent=2, ensure_ascii=False))  # mostra tutte le chiavi e valori della riga
+            print(f"Chiavi disponibili: {list(row.keys())}")
+            print("="*80)
+
             defaults = {
-                "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI"),
-                "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente"),
-                "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente"),
-                "contratti_privati": parse_float("Contratti Privati", "C - Contratti privati"),
-                "disabile": parse_float("Disabile", "C - Disabile"),
-                "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL"),
-                "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE"),
-                "hcp": parse_float("HCP", "C - HCP"),
-                "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori Disabili Gravi"),
+                "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI", "0.00"),
+                "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente", "0.00"),
+                "anziano_non_autosufficiente": parse_float("Anziano Non Autosufficiente", "C - Anziano non autosufficiente", "0.00"),
+                "contratti_privati": parse_float("Contratti Privati", "C - Contratti privati", "0.00"),
+                "disabile": parse_float("Disabile", "C - Disabile", "0.00"),
+                "emergenza_caldo_asl": parse_float("Emergenza Caldo ASL", "C - EMERGENZA CALDO ASL", "0.00"),
+                "emergenza_caldo_comune": parse_float("Emergenza Caldo Comune", "C - EMERGENZA CALDO COMUNE", "0.00"),
+                "hcp": parse_float("HCP", "C - HCP", "0.00"),
+                "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori Disabili Gravi", "0.00"),
                 "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
-                "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD"),
+                "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD", "0.00"),
                 "distretto_nord_est": 0,
-                "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD"),
-                "pnrr": parse_float("PNRR", "C - PNRR"),
-                "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD"),
-                "sud_est": parse_float("Sud Est", "C - Sud-Est"),
-                "sud_ovest": parse_float("Sud Ovest", "C - Sud-Ovest"),
-                "ufficio": parse_float("Ufficio", "C - Ufficio"),
-                "via_tesso": parse_float("C - UFFICIO VIA TESSO"),
-                "totale_ore": parse_float("Totale"),
+                "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD", "0.00"),
+                "pnrr": parse_float("PNRR", "C - PNRR", "0.00"),
+                "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD", "0.00"),
+                "sud_est": parse_float("Sud Est", "C - Sud-Est", "0.00"),
+                "sud_ovest": parse_float("Sud Ovest", "C - Sud-Ovest", "0.00"),
+                "ufficio": parse_float("Ufficio", "C - Ufficio", "0.00"),
+                "via_tesso": parse_float("C - UFFICIO VIA TESSO", "0.00"),
+                "totale_ore": parse_float("Totale", "0.00"),
                 "data_riferimento": data_riferimento,
                 "oretotmese": row.get("oretotmese", 0),
                 "buonoservizio": row.get("buonoservizio", 0),
                 "tariffa": tariffa_val or 0,
                 "descrizionetipologia": row.get("descrizionetipologia",0),
             }
+            
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
             #IL print qui sotto serve per debug delle tipologie non mappate delle APL
             #print(f"Descrizione tipologia: {defaults['descrizionetipologia']}")

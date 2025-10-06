@@ -247,9 +247,9 @@ async function processData(data, source) {
 
       }));
       aggiornaMeseDaHeader(ossData);
-      //console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
+      console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
       //console.log("✅ Dati OSS processati:", ossData);
-      //console.log("Formatro dati Inviati ==>", ossData);
+      console.log("Formatro dati Inviati ==>", ossData);
       const res = await fetch("/salva/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -327,14 +327,15 @@ async function processData(data, source) {
         indirizzo: row["Descrizione circoscrizione"] || "",
         codice_fiscale: row["CODICE FISCALE"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
-
+        "Data di Nascita Cliente": row["Data di nascita beneficiario"] || "",
       }));
-      const rigaTapperoBarbara = dataWithSource.find(row => row.descrizione === "ADAMO DOMENICO");
+      /*const rigaTapperoBarbara = dataWithSource.find(row => row.descrizione === "ADAMO DOMENICO");
       if (rigaTapperoBarbara) {
           console.log("Dati Inviati", rigaTapperoBarbara);
       } else {
           console.log("Nessuna riga trovata con descrizione 'ADAMO DOMENICO'");
-      }
+      }*/
+      console.log("Distretto UTENTE ==> ", dataWithSource);
       allData = [...allData, ...dataWithSource];
 
       const minimalData = dataWithSource.map(row => ({
@@ -348,6 +349,7 @@ async function processData(data, source) {
         "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
         "Codice Fiscale Cliente": row["CODICE FISCALE"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
+        "Data di Nascita Cliente": row["Data di nascita beneficiario"] || "",
       }));
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData);
@@ -508,7 +510,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || "Non specificato",
+        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || row["Distretto"] || row["DISTRETTO"] || "Non specificato",
         oretotmese: row["Ore_Lav_Mese"] || "",
         buonoservizio: row["Ore_Inbuono"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
@@ -528,6 +530,10 @@ async function processData(data, source) {
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
         descrizionetipologia: row["Descrizione tipologia"] || "",        
       }));
+
+      console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
+      //console.log("✅ Dati OSS processati:", ossData);
+      console.log("Formatro dati Inviati ==>", dataWithSource);
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
       
@@ -1242,6 +1248,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
             row.totaleFormattato = row.totaleFormattato.replace('.', ',');
             totaleFatturato = totaleFatturato.replace('.', ',');
+            console.log("👌👌: ",dataRow);
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
