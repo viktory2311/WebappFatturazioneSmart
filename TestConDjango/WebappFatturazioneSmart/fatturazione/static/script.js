@@ -73,7 +73,8 @@ window.onload = () => {
                                   "buonoservizio":u.buonoservizio,
                                   "tariffa": u.tariffa,
                                   "Totale": u.totale_ore,
-                                  "descrizionetipologia": u.descrizionetipologia
+                                  "descrizionetipologia": u.descrizionetipologia,
+                                  "lavoratore": u.lavoratore
                                 }));
                                 if (originalData.length > 1) {
                                         const righeDaOrdinare = originalData.slice(0, -1);
@@ -298,7 +299,9 @@ async function processData(data, source) {
         "oretotmese":u.oretotmese,
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
-        "Totale": u.totale_ore
+        "Totale": u.totale_ore,
+        "descrizionetipologia": u.descrizionetipologia,
+        "lavoratore": u.lavoratore        
       }))
       
        if (originalData.length > 1) {
@@ -396,7 +399,8 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore,
-        "descrizionetipologia": u.descrizionetipologia
+        "descrizionetipologia": u.descrizionetipologia,
+        "lavoratore": u.lavoratore 
       }))
       
        if (originalData.length > 1) {
@@ -425,6 +429,7 @@ async function processData(data, source) {
         "Codice Fiscale Cliente": row["CODICE FISCALE BENEFICIARIO"] || "",
         "Data di Nascita Cliente": formatDateIfValid(row["DATA NASCITA BENEFICIARIO"]),
         descrizionetipologia: row["TIPOLOGIA_UTENTE"] || "",
+        lavoratore: row["LAVORATORE"],
       }));
       console.log("✅ Dati Synergie processati:", dataWithSource.slice(0, 2));
       allData = [...allData, ...dataWithSource];
@@ -435,12 +440,13 @@ async function processData(data, source) {
         apl: deriveAPL(source),
         tipologia: "AF",
         distretto: row["CIRC."] || "Non specificato",
-        oretotmese: row["ORE_LAV_MESE"] || "",
-        buonoservizio: row["ORE IN BUONO"] || 0,
+        oretotmese: row["ORE IN BUONO"] || "",
+        buonoservizio: row["ORE_LAV_MESE"] || 0,
         "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
         "Codice Fiscale Cliente": row["COD. FISCALE BENEFICIARIO"] || "",
         "Data di Nascita Cliente": row["DATA NASCITA BENEFICIARIO"],
         descrizionetipologia: row["TIPOLOGIA_UTENTE"] || "",
+        lavoratore: row["LAVORATORE"],
       }));
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
@@ -487,7 +493,8 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore,
-        "descrizionetipologia": u.descrizionetipologia
+        "descrizionetipologia": u.descrizionetipologia,
+        "lavoratore": u.lavoratore 
       }))
       
        if (originalData.length > 1) {
@@ -579,7 +586,8 @@ async function processData(data, source) {
         "buonoservizio":u.buonoservizio,
         "tariffa": u.tariffa,
         "Totale": u.totale_ore,
-        "descrizionetipologia": u.descrizionetipologia
+        "descrizionetipologia": u.descrizionetipologia,
+        "lavoratore": u.lavoratore 
 
       }))
       
@@ -842,6 +850,7 @@ function populateTable(data) {
         tariffa: row.tariffa,
         totaleFormattato,
         descrizionetipologia: row.descrizionetipologia,
+        lavoratore: row.lavoratore,
       });
       //console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
     //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
@@ -1058,19 +1067,22 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
   let headers = [];
   switch (tipoFattura) {
     case 'anziani_non_autosufficienti':
-      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl", "Distretto"];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     case 'anziani_autosufficienti':
-      headers = ["Nome e cognome", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     case 'disabili':
-      headers = ["Nome e cognome", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     case 'minori_disabili_gravi':
-      headers = ["Nome e cognome", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     case 'emergenza_caldo':
       headers = ["Descrizione", "Data di Nascita", "Emergenza Caldo", "Assistenza", "Distretto"];
+      break;
+    case 'Tutte le categorie':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     default:
       headers = ["Descrizione", "Data di Nascita", "Indirizzo", "Codice Fiscale", "Distretto"];
@@ -1176,7 +1188,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
         print_distretto = "Sud Ovest";  // Assegna il nome del distretto Sud Ovest
       }
     }
-    let  totaleFatturato = "€ " + parseFloat(row.tariffa * row.totaleFormattato).toFixed(2);
+    let  totaleFatturato = parseFloat(row.tariffa * row.totaleFormattato).toFixed(2) + "€";
     
     let tipoUtenza ="";
     //console.log("🙌Valore Descrizione Tipologia  ==> ", row.descrizionetipologia);
@@ -1190,7 +1202,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     }else if(row.disabile > 0){
       tipoUtenza = "disabili";
     }else{
-      const mappaTipologia = {
+      let mappaTipologia = {
     "ANZIANI AUTOSUFFICIENTI": "anziani_autosufficienti",
     "ANZIANI NON AUTOSUFFICIENTI": "anziani_non_autosufficienti",
     "MINORI DISABILI GRAVI": "minori_disabili_gravi",
@@ -1216,50 +1228,36 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             console.log("Nome Utente Senza Utenza ===>", row.descrizione, "APL ==>", row.apl , "Tipologia Valore ==> ", tipologiaValue);          
       }*/
      
-    if (tipoFattura === tipoUtenza) {
+    if (tipoFattura === tipoUtenza || tipoFattura === "Tutte le categorie") {
         // Definisci la riga di dati in base al tipo di fattura
         switch (tipoFattura) {
-          case 'anziani_non_autosufficienti':
-            // Verifica solo se apl è vuoto o null if (aplValue === " " || aplValue === null || aplValue === undefined) { aplValue = 'Valore non disponibile'; } 
-            //console.log("APL Value prima di dettaglio:", row.apl);  // Verifica che il valore sia corretto
-            row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
-            row.totaleFormattato = row.totaleFormattato.replace('.', ',');
-            totaleFatturato = totaleFatturato.replace('.', ',');
-            row.buonoservizio = String(row.buonoservizio || "").replace('.', ',');
-            //console.log("Ore Buono Servizio ==> ",  row.buonoservizio);
+          case 'anziani_non_autosufficienti':  
+
             /*totaleFatturato --> Totale calcolato come Tariffa * Totale Ore
               row.totaleFormattato --> Totale Ore Erogate
               row.tariffa --> Tariffa oraria(Costo Mensile)
               row.buonoservizio --> Tipo Intervento*/
               
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl, print_distretto]; 
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl]; 
             //console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
       break;
           case 'anziani_autosufficienti':
-            row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
-            row.totaleFormattato = row.totaleFormattato.replace('.', ',');
-            console.log(" 😁😁 Valore TotaleFatturato: ", totaleFatturato );
-            totaleFatturato = totaleFatturato.replace('.', ',');
-            console.log(" 😁😁 Valore TotaleFatturato: ", totaleFatturato );
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'disabili':
-            row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
-            row.totaleFormattato = row.totaleFormattato.replace('.', ',');
-            totaleFatturato = totaleFatturato.replace('.', ',');
-            console.log("👌👌: ",dataRow);
+            //console.log("👌👌: ",dataRow);
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
-            console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
+            //console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
           case 'minori_disabili_gravi':
-            row.tariffa = parseFloat(row.tariffa || 0).toFixed(2).replace('.', ',');
-            row.totaleFormattato = row.totaleFormattato.replace('.', ',');
-            totaleFatturato = totaleFatturato.replace('.', ',');
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'emergenza_caldo':
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
+            break;
+          case 'Tutte le categorie':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           default:
             dataRow = [row.descrizione, row.dataNascita, row.indirizzo, row.codiceFiscale, print_distretto];
@@ -1268,6 +1266,24 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
   let count = 0;
     if (isNord) {
       const row = nordWorksheet.addRow(dataRow);
+        // Imposta formati numerici e valuta per le colonne corrette
+        const colBuono = 8;            // buonoservizio → numero
+        const colTariffa = 9;          // tariffa → €
+        const colOreTotali = 10;       // totaleFormattato → numero
+        const colTotaleFatturato = 11; // totaleFatturato → €
+
+        // Funzione helper per pulire e convertire i valori
+        function setNumericValue(cell, format) {
+          const val = parseFloat(String(cell.value).replace(/[^\d.-]/g, '')) || 0;
+          cell.value = val;
+          cell.numFmt = format;
+        }
+
+        // Applica i formati
+        setNumericValue(row.getCell(colBuono), '0.00');
+        setNumericValue(row.getCell(colTariffa), '€ #,##0.00');
+        setNumericValue(row.getCell(colOreTotali), '0.00');
+        setNumericValue(row.getCell(colTotaleFatturato), '€ #,##0.00');
 
         if (nordWorksheet.rowCount % 2 === 0) {
                 // Se il numero della riga è pari, la riga sarà verde
@@ -1312,6 +1328,24 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
       });
     } else if (isSud) {
       const row = sudWorksheet.addRow(dataRow);
+        // Imposta formati numerici e valuta per le colonne corrette
+        const colBuono = 8;            // buonoservizio → numero
+        const colTariffa = 9;          // tariffa → €
+        const colOreTotali = 10;       // totaleFormattato → numero
+        const colTotaleFatturato = 11; // totaleFatturato → €
+
+        // Funzione helper per pulire e convertire i valori
+        function setNumericValue(cell, format) {
+          const val = parseFloat(String(cell.value).replace(/[^\d.-]/g, '')) || 0;
+          cell.value = val;
+          cell.numFmt = format;
+        }
+
+        // Applica i formati
+        setNumericValue(row.getCell(colBuono), '0.00');
+        setNumericValue(row.getCell(colTariffa), '€ #,##0.00');
+        setNumericValue(row.getCell(colOreTotali), '0.00');
+        setNumericValue(row.getCell(colTotaleFatturato), '€ #,##0.00');
        if (sudWorksheet.rowCount % 2 === 0) {
                 // Se il numero della riga è pari, la riga sarà verde
                 row.eachCell((cell) => {
@@ -1353,69 +1387,86 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
 
 
 // --- Costruisci la tabella riassuntiva ---
-let riepilogo = {};  // { key: { descrizione, costoOrario, ore, totale, fattura } }
-
-visualizedData.forEach(row => {
-  let key = row.tipologia + "|" + (row.apl || "") + "|" + (row.fattura_numero || "");
-  if (!riepilogo[key]) {
-    riepilogo[key] = {
-      descrizione: `ore ${row.tipologia.toLowerCase()} ${row.apl || ""}`.trim(),
-      costoOrario: parseFloat(row.tariffa) || 0,
-      ore: 0,
-      totale: 0,
-      fattura: row.fattura_numero || ""
+//let riepilogo = {};  // { key: { descrizione, costoOrario, ore, totale, fattura } }
+function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
+  // Filtra i dati in base al tipo di fattura e al distretto
+  const datiFiltrati = visualizedData.filter(row => {
+    let rowTipo = "";
+    const isRigaNord = row.nordOvest > 0 || row.distrettoNord > 0 || row.distrettoNordEst > 0;
+    const isRigaSud = row.sudOvest > 0 || row.distrettoSud > 0 || row.sudEst > 0;
+    const mappaTipologia = {
+    "ANZIANI AUTOSUFFICIENTI": "anziani_autosufficienti",
+    "ANZIANI NON AUTOSUFFICIENTI": "anziani_non_autosufficienti",
+    "MINORI DISABILI GRAVI": "minori_disabili_gravi",
+    "DISABILI": "disabili",
+    "DISABILE": "disabili",
+    "Disabili": "disabili",
+    "Anziani non Auto": "anziani_non_autosufficienti",
+    "Minori Disabili Gravi": "minori_disabili_gravi",
+    "ANZ_NON_AUTO": "anziani_non_autosufficienti",
+    "DISABILE": "disabili",
+    "ANZ_AUTO": "anziani_autosufficienti",
+    "MINORI": "minori_disabili_gravi",
+    "EMERGENZA CALDO": "emergenza_caldo",
     };
-  }
-  riepilogo[key].ore += parseFloat(row.totaleFormattato) || 0;
-  riepilogo[key].totale += (parseFloat(row.totaleFormattato) || 0) * (parseFloat(row.tariffa) || 0);
-});
-
-// --- Inserisci nel foglio Nord ---
-nordWorksheet.addRow([]);
-nordWorksheet.addRow(["Descrizione", "costo orario", "ore", "totale", "fattura n."]).eachCell(cell => {
-  cell.font = { bold: true };
-  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
-});
-
-Object.values(riepilogo).forEach(item => {
-  let row = nordWorksheet.addRow([
-    item.descrizione,
-    "€ " + item.costoOrario.toFixed(2).replace(".", ","),
-    item.ore.toFixed(2).replace(".", ","),
-    "€ " + item.totale.toFixed(2).replace(".", ","),
-    item.fattura
-  ]);
-  row.eachCell(cell => {
-    cell.border = {
-      top: { style: 'thin' }, bottom: { style: 'thin' },
-      left: { style: 'thin' }, right: { style: 'thin' }
-    };
+    rowTipo = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
+console.log("valore rowTipo >>>>", rowTipo,"valore tipoFattura >>>>>> ", tipoFattura);
+    return (
+      tipoFattura === rowTipo &&
+      ((isNord && isRigaNord) || (!isNord && isRigaSud))
+    );
   });
-});
 
-// --- Copia anche sul foglio Sud ---
-sudWorksheet.addRow([]);
-sudWorksheet.addRow(["Descrizione", "costo orario", "ore", "totale", "fattura n."]).eachCell(cell => {
-  cell.font = { bold: true };
-  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
-});
+  if (datiFiltrati.length === 0) return;
 
-Object.values(riepilogo).forEach(item => {
-  let row = sudWorksheet.addRow([
-    item.descrizione,
-    "€ " + item.costoOrario.toFixed(2).replace(".", ","),
-    item.ore.toFixed(2).replace(".", ","),
-    "€ " + item.totale.toFixed(2).replace(".", ","),
-    item.fattura
-  ]);
-  row.eachCell(cell => {
-    cell.border = {
-      top: { style: 'thin' }, bottom: { style: 'thin' },
-      left: { style: 'thin' }, right: { style: 'thin' }
-    };
+  // Calcolo riepilogo
+  let riepilogo = {};
+  datiFiltrati.forEach(row => {
+    let key = `${row.tipologia}|${row.apl || ""}|${row.fattura_numero || ""}`;
+    if (!riepilogo[key]) {
+      riepilogo[key] = {
+        descrizione: `ore ${row.tipologia.toLowerCase()} ${row.apl || ""}`.trim(),
+        costoOrario: parseFloat(row.tariffa) || 0,
+        ore: 0,
+        totale: 0,
+        fattura: row.fattura_numero || ""
+      };
+    }
+    const ore = parseFloat(row.totaleFormattato) || 0;
+    const tariffa = parseFloat(row.tariffa) || 0;
+    riepilogo[key].ore += ore;
+    riepilogo[key].totale += ore * tariffa;
   });
-});
 
+  // Crea intestazione
+  ws.addRow([]);
+  const header = ws.addRow(["Descrizione", "Costo orario", "Ore", "Totale", "Fattura n."]);
+  header.eachCell(cell => {
+    cell.font = { bold: true };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
+  });
+
+  // Inserisci dati e applica formattazione
+  Object.values(riepilogo).forEach(item => {
+    const row = ws.addRow([item.descrizione, item.costoOrario, item.ore, item.totale, item.fattura]);
+    row.eachCell(cell => {
+      cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    });
+    function setNumericValue(cell, format) {
+          const val = parseFloat(String(cell.value).replace(/[^\d.-]/g, '')) || 0;
+          cell.value = val;
+          cell.numFmt = format;
+        }
+    // colonne: 2=costo orario (€), 3=ore (numero), 4=totale (€)
+    setNumericValue(row.getCell(2), '€ #,##0.00');
+    setNumericValue(row.getCell(3), '0.00');
+    setNumericValue(row.getCell(4), '€ #,##0.00');
+  });
+}
+
+// --- Poi, per ciascun foglio Nord/Sud ---
+calcolaRiepilogoPerSheet(visualizedData, tipoFattura, nordWorksheet, true); // Nord
+calcolaRiepilogoPerSheet(visualizedData, tipoFattura, sudWorksheet, false);  // Sud
   
 
   // --- Larghezza delle colonne ---
@@ -1582,6 +1633,9 @@ function setFattura(tipo) {
       break;
     case 'emergenza_caldo':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break; 
+    case 'Tutte le categorie':
+    description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break; 
     default:
       description = 'Seleziona un tipo di fattura per vedere i parametri.';

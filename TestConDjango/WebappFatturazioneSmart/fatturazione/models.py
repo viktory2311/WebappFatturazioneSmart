@@ -35,6 +35,7 @@ class Utente(models.Model):
     buonoservizio = models.FloatField(default=0)
     tariffa =  models.FloatField(default=0)
     descrizionetipologia = models.CharField(max_length=16, blank=True)
+    lavoratore = models.CharField(max_length=16, blank=True)
 
 
     totale_ore = models.FloatField(default=0)

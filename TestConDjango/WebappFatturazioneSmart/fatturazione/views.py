@@ -121,6 +121,7 @@ def salva_dati(request):
                 "buonoservizio": row.get("buonoservizio", 0),
                 "tariffa": tariffa_val or 0,
                 "descrizionetipologia": row.get("descrizionetipologia",0),
+                "lavoratore": row.get("lavoratore",0),
             }
             
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
@@ -180,6 +181,7 @@ def salva_dati(request):
                 utente, created = Utente.objects.update_or_create(
                     codice_fiscale=codice_fiscale,
                     oretotmese=row.get("oretotmese", 0),
+                    lavoratore=row.get("lavoratore", 0),
                     #nome = nome.strip(), questo è stato usato per testare la riga duplicata di del file synergie dove c'è l'utente Giovanni Incardona
                     defaults={
                         "nome": nome.strip(),
