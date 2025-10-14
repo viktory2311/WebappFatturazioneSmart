@@ -208,7 +208,7 @@ function loadFile(source) {
 
       let jsonData;
       if(source === "oss"){
-          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 });
+          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0 });
       console.log("Aggiunto file oss 😂");
       }else if(source === "synergie"){
           let sheetName = workbook.SheetNames[1];
@@ -242,10 +242,9 @@ async function processData(data, source) {
     if (source === "oss") {
       let ossData = data.map(row => ({
         ...row,
-        tipologia: "OSS",
+        tipologia: "OSS",        
         apl: deriveAPL(source),
         buonoservizio: row["BUONO SERVIZIO"] || 0,
-
       }));
       aggiornaMeseDaHeader(ossData);
       console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
@@ -267,7 +266,7 @@ async function processData(data, source) {
 
       let utentiRes = await fetch("/utenti/");
       let utentiData = await utentiRes.json();
-
+      console.log("Dati restituite dal DB🗝️: ", utentiData);
       // Mappo dati DB → frontend
       originalData = utentiData.map(u => ({
         "Descrizione": u.nome,
@@ -518,10 +517,11 @@ async function processData(data, source) {
         apl: deriveAPL(source),
         tipologia: "AF",
         distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || row["Distretto"] || row["DISTRETTO"] || "Non specificato",
-        oretotmese: row["Ore_Lav_Mese"] || "",
-        buonoservizio: row["Ore_Inbuono"] || 0,
+        oretotmese: row["Ore_Inbuono"] || "",
+        buonoservizio: row["Ore_Lav_Mese"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
-        descrizionetipologia: row["Descrizione tipologia"] || "",        
+        descrizionetipologia: row["Descrizione tipologia"] || "",    
+        lavoratore: row["Cognome Nome a.f."],    
       }));
       console.log("✅ Dati Umana processati:", dataWithSource);
       allData = [...allData, ...dataWithSource];
@@ -532,10 +532,11 @@ async function processData(data, source) {
         apl: deriveAPL(source),
         tipologia: "AF",
         distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || "Non specificato",
-        oretotmese: row["Ore_Lav_Mese"] || "",
-        buonoservizio: row["Ore_Inbuono"] || 0,
+        oretotmese: row["Ore_Inbuono"] || "",
+        buonoservizio: row["Ore_Lav_Mese"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
         descrizionetipologia: row["Descrizione tipologia"] || "",        
+        lavoratore: row["Cognome Nome a.f."],
       }));
 
       console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
@@ -1209,6 +1210,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     "DISABILI": "disabili",
     "DISABILE": "disabili",
     "Disabili": "disabili",
+    "Anziani Auto": "anziani_autosufficienti",
     "Anziani non Auto": "anziani_non_autosufficienti",
     "Minori Disabili Gravi": "minori_disabili_gravi",
     "ANZ_NON_AUTO": "anziani_non_autosufficienti",
@@ -1500,7 +1502,7 @@ function caricaTariffe() {
     .then(r => r.json())
     .then(data => {
       data.forEach(t => {
-        let cell = document.querySelector(`#tabella-prezzi td[data-prestazione="${t.tipologia}"][data-apl="${t.apl || ""}"`);
+        let cell = document.querySelector(`#tabella-prezzi td[data-prestazione="${t.tipologia}"][data-apl="${t.apl || ""}"]`);
 
         if (cell) cell.innerText = parseFloat(t.valore).toFixed(2).replace(",", ".");
       });
@@ -1509,7 +1511,7 @@ function caricaTariffe() {
 }
 
 // Salva le tariffe modificate
-function salvaTariffe() {
+/*function salvaTariffe() {
   let dati = {};
   document.querySelectorAll("#tabella-prezzi td[data-prestazione]").forEach(cell => {
     dati[cell.dataset.prestazione] = parseFloat(cell.innerText.trim());
@@ -1531,7 +1533,7 @@ function salvaTariffe() {
       alert("❌ Errore: " + res.message);
     }
   });
-}
+}*/
 
 
 function salvaTariffe() {
@@ -1566,21 +1568,21 @@ function salvaTariffe() {
       alert("❌ Errore: " + res.message);
     }
   });
-}
+} 
 
 
 function validateNumberInput(cell){
-let text = cell.innerText.trim().replace('.', ','); 
-let num = parseFloat(text);
-if (isNaN(num) || num < 0 || num > 1000) {
+let text = cell.innerText.trim().replace(',', '.');
+  let num = parseFloat(text);
+
+  if (isNaN(num) || num < 0 || num > 1000) {
     alert("❌ Inserisci un valore tra 0 e 1000");
-    cell.innerText = "0.00";
+    cell.innerText = "0,00";
   } else {
     cell.innerText = num.toFixed(2);
+    cell.dataset.value = num.toFixed(2);
   }
 }
-
-
 
   function showMeaning(text) {
   alert(text);

@@ -45,7 +45,9 @@ def salva_dati(request):
             return JsonResponse({"status": "invalid"}, status=400)
 
         body = json.loads(request.body)
-        logger.info(f"Ricevuti {len(body)} record dal frontend")
+        #logger.info(f"Ricevuti {len(body)} record dal frontend")
+        print(f"📦 Corpo ricevuto: {request.body}")
+        #print(f"Ricevuti {len(body)} record dal frontend")
 
         for row in body:
             # Seleziona il campo "nome" in base al file
@@ -64,7 +66,7 @@ def salva_dati(request):
 
             # Data di nascita se presente
             data_excel = row.get("Data di Nascita Cliente") or row.get("DataNascita") or None
-            data_nascita = excel_serial_to_date(data_excel) if data_excel else None
+            data_nascita = excel_serial_to_date(data_excel) if data_excel else ""
 
             # Tipologia e APL
             tipologia = row.get("tipologia") or row.get("TIPOLOGIA") or ""
@@ -86,15 +88,13 @@ def salva_dati(request):
             #print(list(Utente.objects.all().values()))
             # defaults comuni (non anagrafici)
             #print(f"Chiavi disponibili: {row.keys()}")
-
-
-
+            '''
             print("\n" + "="*80)
             print(f"🔹 Nuova riga dal file:")
             print(json.dumps(row, indent=2, ensure_ascii=False))  # mostra tutte le chiavi e valori della riga
             print(f"Chiavi disponibili: {list(row.keys())}")
             print("="*80)
-
+            '''
             defaults = {
                 "assistenza_domiciliare_integrata": parse_float("Assistenza Domiciliare Integrata", "C-ADI", "0.00"),
                 "anziano_autosufficiente": parse_float("Anziano Autosufficiente", "C - Anziano autosufficiente", "0.00"),
@@ -123,7 +123,7 @@ def salva_dati(request):
                 "descrizionetipologia": row.get("descrizionetipologia",0),
                 "lavoratore": row.get("lavoratore",0),
             }
-            
+            #print(f"Nome Utente: {row.get('C - Anziano autosufficiente')}")
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
             #IL print qui sotto serve per debug delle tipologie non mappate delle APL
             #print(f"Descrizione tipologia: {defaults['descrizionetipologia']}")
@@ -139,8 +139,11 @@ def salva_dati(request):
                 defaults["data_nascita"] = data_nascita.date()
             if row.get("Indirizzo Cliente"):
                 defaults["indirizzo"] = row.get("Indirizzo Cliente")
-            if row.get("Codice Fiscale Cliente"):
+            cf = (row.get("Codice Fiscale Cliente") or "").strip()
+            if cf not in (None, "", 0):
                 defaults["codice_fiscale"] = row.get("Codice Fiscale Cliente")
+            else:
+                defaults["codice_fiscale"] = " CF Mancante"
 
             # gestione distretto come prima → AGGIORNO SOLO SE DISTRETTO VALORIZZATO
             distretto = (row.get("distretto") or "").strip()
@@ -174,22 +177,29 @@ def salva_dati(request):
                 if distretto_value:
                     defaults["distretto"] = distretto_value       
                     
-                clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "", 0)} #In Django non perdo i dati per via del filtro if v not in (None, "", 0) prima di fare l’update.
-                # Rimuovo le chiavi già passate esplicitamente
-                clean_defaults.pop("tipologia", None)
-                clean_defaults.pop("apl", None)
-                utente, created = Utente.objects.update_or_create(
-                    codice_fiscale=codice_fiscale,
-                    oretotmese=row.get("oretotmese", 0),
-                    lavoratore=row.get("lavoratore", 0),
-                    #nome = nome.strip(), questo è stato usato per testare la riga duplicata di del file synergie dove c'è l'utente Giovanni Incardona
-                    defaults={
-                        "nome": nome.strip(),
-                        "tipologia": tipologia,
-                        "apl": apl,
-                        **clean_defaults
-                    }
-                )         
+
+            clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "")}
+             #In Django non perdo i dati per via del filtro if v not in (None, "") prima di fare l’update.
+            # Rimuovo le chiavi già passate esplicitamente
+            clean_defaults.pop("tipologia", None)
+            clean_defaults.pop("apl", None)
+            #ne caso oretotmese sia vuoto quindi con "", si restituisce 0
+            oretotmese = row.get("oretotmese")
+            oretotmese = float(oretotmese) if oretotmese not in (None, "") else 0
+            utente, created = Utente.objects.update_or_create(
+                codice_fiscale=codice_fiscale,
+                oretotmese=oretotmese,
+                lavoratore= row.get("lavoratore", ""),
+                defaults={
+                    "nome": nome.strip(),
+                    "tipologia": tipologia,
+                    "apl": apl,
+                    "oretotmese": oretotmese,
+                    "lavoratore": row.get("lavoratore", ""),
+                    **clean_defaults
+                }
+            ) 
+            logger.info(f"🧾 Utente salvato: {utente.nome}, creato={created}")       
         return JsonResponse({"status": "ok"})
     except Exception as e:
             logger.exception("Errore durante il salvataggio")
