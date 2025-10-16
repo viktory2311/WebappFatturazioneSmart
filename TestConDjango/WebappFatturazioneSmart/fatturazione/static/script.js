@@ -447,6 +447,9 @@ async function processData(data, source) {
         descrizionetipologia: row["TIPOLOGIA_UTENTE"] || "",
         lavoratore: row["LAVORATORE"],
       }));
+      console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
+      console.log("Formatro dati Inviati ==>", dataWithSource);
+
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
       
@@ -1079,6 +1082,9 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     case 'minori_disabili_gravi':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
+    case 'minori_non_disabili':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break;
     case 'emergenza_caldo':
       headers = ["Descrizione", "Data di Nascita", "Emergenza Caldo", "Assistenza", "Distretto"];
       break;
@@ -1218,6 +1224,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     "ANZ_AUTO": "anziani_autosufficienti",
     "MINORI": "minori_disabili_gravi",
     "EMERGENZA CALDO": "emergenza_caldo",
+    "Minori non Disabili":"minori_non_disabili",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     if(!meseCompleto){
@@ -1254,6 +1261,9 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             break;
           case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;
+          case 'minori_non_disabili':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, "233", row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'emergenza_caldo':
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
