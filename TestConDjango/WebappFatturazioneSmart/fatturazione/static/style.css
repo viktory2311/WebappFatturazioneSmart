@@ -176,7 +176,11 @@ main.flex-column {
 }
 
 .btn-info:hover {
-  background-color: #007BFF; /* Blu scuro */
+  background-color: #00b7ff;
   color: rgb(255, 255, 255);
+}
+.btn-info.clicked {
+  background-color: #00b7ff; /* Blu scuro */
+  color: white;
 }
 /*--- FINE ---*/

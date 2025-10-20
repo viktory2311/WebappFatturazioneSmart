@@ -48,7 +48,9 @@ class Utente(models.Model):
 class Tariffa(models.Model):
     tipologia = models.CharField(max_length=50)    # Es. "SYNERGIE", "OSS"
     valore = models.DecimalField(max_digits=6, decimal_places=2)
+    descrizionetipologia = models.CharField(max_length=100, blank=True, null=True)
     apl = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.tipologia}: {self.valore} €"
+        return f"{self.tipologia} - {self.apl or '---'} - {self.descrizionetipologia or '---'}: {self.valore} €"
+

@@ -55,8 +55,12 @@ def salva_dati(request):
             if not nome:
                 logger.warning(f"Riga saltata (nessun nome identificativo): {row}")
                 continue  # salta righe senza identificativo
-            tariffa_val = get_tariffa(row.get("apl") or row.get("tipologia"))
-
+            #tariffa_val = get_tariffa(row.get("apl") or row.get("tipologia"))
+            tariffa_val = get_tariffa(
+                prestazione=row.get("tipologia") or row.get("apl"),
+                descrizionetipologia=row.get("descrizionetipologia"),
+                apl=row.get("apl")
+            )
             # Data di riferimento se presente
             intestazione = next(
                 (k for k in row.keys() if re.match(r'(\d{2})\s([a-z]{3})\s(\d{4})', k, re.IGNORECASE)),
@@ -207,47 +211,81 @@ def salva_dati(request):
 
 @csrf_exempt
 @require_POST
+@csrf_exempt
 def salva_tariffe(request):
     try:
-        print("Dati ricevuti nella richiesta:", request.body)
-
         payload = json.loads(request.body)
         dati = payload.get("dati", [])
 
         for item in dati:
-            prestazione = item.get("prestazione")
-            apl = item.get("apl", "")
+            prestazione = item.get("prestazione", "")
+            apl = item.get("apl", "").strip()
+            descrizione = str(item.get("descrizionetipologia") or "").strip()
             valore = item.get("valore")
 
-            if prestazione is None or valore is None:
+            if valore in (None, ""):
                 continue  # ignora record incompleti
 
-            # aggiorna la tabella Tariffa
-            tariffa, _ = Tariffa.objects.update_or_create(
+            #1. Aggiorna o crea la tariffa specifica
+            tariffa, created = Tariffa.objects.update_or_create(
                 tipologia=prestazione,
-                apl=apl,   # solo se Tariffa ha anche il campo 'apl'
-                defaults={"valore": valore}
+                apl=apl,
+                descrizionetipologia=descrizione,
+                defaults={"valore": valore},
             )
-            print(f"Aggiornata tariffa: {prestazione} - {apl} = {valore}")
 
-            print("Filtro utenti:", prestazione, apl)
-            utenti = Utente.objects.filter(tipologia=prestazione, apl=apl)
-            print("Utenti trovati:", utenti.count())
+            print(f"Descrizione nel filtro: '{descrizione}'")
+
+            
+            action = "Creata" if created else "Aggiornata"
+            #print(f"{action} tariffa: {prestazione} | APL: {apl or '-'} | Tipo: {descrizione or '-'} | Valore: {valore}")
+            
+            filtri = {}
+            #2. Aggiorna tutti gli utenti collegati
+            if prestazione:
+                filtri = {"tipologia": prestazione}
+
+            if apl:
+                filtri["apl"] = apl.strip()
+            elif descrizione:
+                filtri["descrizionetipologia__iexact"] = descrizione.strip()
+
+
+
+            utenti = Utente.objects.filter(**filtri)
+            print(f"Filtri usati: {filtri}")
+            print(f"Query SQL: {utenti.query}")
+            print(f"Trovati {utenti.count()} utenti per {filtri}")
+
             utenti.update(tariffa=valore)
+            print(Utente.objects.filter(**filtri).values_list("tariffa", flat=True)[:10])
 
-            # aggiorna anche tutti gli utenti che hanno quella tipologia + apl
-            #Utente.objects.filter(tipologia=prestazione, apl=apl).update(tariffa=valore)
 
-        return JsonResponse({"status": "ok", "message": "Tariffe salvate"})
+        return JsonResponse({"status": "ok", "message": "Tariffe aggiornate correttamente"})
+
     except Exception as e:
+        print("❌ Errore salva_tariffe:", e)
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
-    
-def get_tariffa(prestazione):
 
+    
+def get_tariffa(prestazione, descrizionetipologia=None, apl=None):
+    """
+    Restituisce il valore della tariffa per tipologia, descrizionetipologia e opzionalmente APL.
+    """
     qs = Tariffa.objects.filter(tipologia=prestazione)
+
+    if descrizionetipologia:
+        qs = qs.filter(descrizionetipologia__iexact=str(descrizionetipologia).strip())
+
+    if apl:
+        qs = qs.filter(apl__iexact=str(apl).strip())
+
     if not qs.exists():
         return None  # Nessuna tariffa trovata
-    return qs.first().valore  # prendi la prima riga e accedi al campo
+
+    return qs.first().valore  # prendi la prima riga
+
+
 
 @csrf_exempt
 @require_POST
@@ -257,12 +295,22 @@ def reset_utenti(request):
         return JsonResponse({"Status": "ok", "message": "Risposta server: Dati cancellati con successo"})
     except Exception as e:
         return JsonResponse({"Status": "error", "message": str(e)}, status=500)
+    
+@csrf_exempt
+@require_POST
+def reset_tariffe(request):
+    try:
+        Tariffa.objects.all().delete();
+        return JsonResponse({"Status": "ok", "message": "Risposta server: Tariffe cancellate con successo"})
+    except Exception as e:
+        return JsonResponse({"Status": "error", "message": str(e)}, status=500)
+
 
 def lista_utenti(request):
     utenti = list(Utente.objects.values())
     return JsonResponse(utenti, safe=False)
 def lista_tariffe(request):
-    tariffe = list(Tariffa.objects.values("tipologia","apl","valore"))
+    tariffe = list(Tariffa.objects.values("tipologia","descrizionetipologia","apl","valore"))
     return JsonResponse(tariffe, safe=False)
 def home(request):
     return render(request, 'index.html')    

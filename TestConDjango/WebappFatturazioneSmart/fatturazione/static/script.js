@@ -26,8 +26,6 @@ window.onload = () => {
             //populateUtenteFilter();
             //applyFilters();
             //}
-          caricaTariffe();      
-
           // ---- Qui inseriamo il fetch dai server ----
             fetch("/utenti/")
               .then(res => {
@@ -88,7 +86,8 @@ window.onload = () => {
                                   console.log(`✅ Data ok in posizione ${i}:`, u["Data di Nascita Cliente"]);
                                 }   
                               });*/
-
+                              caricaTariffe();  
+                              console.log("valore>>> tariffa :::: ", originalData[69]["tariffa"]);
                               aggiornaUIconData(originalData);
                               populateTable(originalData);
                               populateUtenteFilter();
@@ -1085,6 +1084,15 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     case 'minori_non_disabili':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
+    case 'minori_non_disabili_bs':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break; 
+    case 'minori_non_disabili_bs_u6':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break;   
+    case 'minori_non_disabili_Is':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break;   
     case 'emergenza_caldo':
       headers = ["Descrizione", "Data di Nascita", "Emergenza Caldo", "Assistenza", "Distretto"];
       break;
@@ -1225,12 +1233,15 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     "MINORI": "minori_disabili_gravi",
     "EMERGENZA CALDO": "emergenza_caldo",
     "Minori non Disabili":"minori_non_disabili",
+    "Minori non Disabili BS":"minori_non_disabili_bs",
+    "Minori non Disabili BS U6":"minori_non_disabili_bs_u6",
+    "Minori non Disabili Is":"minori_non_disabili_Is",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     if(!meseCompleto){
       meseCompleto = "Valore non Specificato";
     }
-    //console.log("🙌Valore Apl  ==> ", row.apl, "🙌Valore tipoUtenza  ==> ",  mappaTipologia[row.descrizionetipologia] === "ANZ_AUTO" );
+    //console.log("🙌Valore Apl  ==> ", row.apl, "🙌Valore tipoUtenza  ==> ", tipoUtenza   );
     }
     /*if(tipoUtenza === "tipo_utenza_non_definito")
       {
@@ -1263,8 +1274,17 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'minori_non_disabili':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, "233", row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
+          case 'minori_non_disabili_bs':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;  
+          case 'minori_non_disabili_bs_u6':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;
+          case 'minori_non_disabili_Is':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;  
           case 'emergenza_caldo':
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
             break;
@@ -1413,6 +1433,7 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     "DISABILI": "disabili",
     "DISABILE": "disabili",
     "Disabili": "disabili",
+    "Anziani Auto": "anziani_autosufficienti",
     "Anziani non Auto": "anziani_non_autosufficienti",
     "Minori Disabili Gravi": "minori_disabili_gravi",
     "ANZ_NON_AUTO": "anziani_non_autosufficienti",
@@ -1420,9 +1441,13 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     "ANZ_AUTO": "anziani_autosufficienti",
     "MINORI": "minori_disabili_gravi",
     "EMERGENZA CALDO": "emergenza_caldo",
+    "Minori non Disabili":"minori_non_disabili",
+    "Minori non Disabili BS":"minori_non_disabili_bs",
+    "Minori non Disabili BS U6":"minori_non_disabili_bs_u6",
+    "Minori non Disabili Is":"minori_non_disabili_Is",
     };
     rowTipo = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
-console.log("valore rowTipo >>>>", rowTipo,"valore tipoFattura >>>>>> ", tipoFattura);
+    //console.log("valore rowTipo >>>>", rowTipo,"valore tipoFattura >>>>>> ", tipoFattura);
     return (
       tipoFattura === rowTipo &&
       ((isNord && isRigaNord) || (!isNord && isRigaSud))
@@ -1512,13 +1537,14 @@ function caricaTariffe() {
     .then(r => r.json())
     .then(data => {
       data.forEach(t => {
-        let cell = document.querySelector(`#tabella-prezzi td[data-prestazione="${t.tipologia}"][data-apl="${t.apl || ""}"]`);
-
+        let cell = document.querySelector(`#tabella-prezzi td[data-prestazione="${t.tipologia}"][data-apl="${t.apl || ""}"][data-descrizionetipologia="${t.descrizionetipologia || ""}"]`);
+        console.log("VaLORE >>>>", t.valore, " | Apl >>> ",t.apl," | Tipologia >>>",t.tipologia, " | Descrizione Tipologia >>>",t.descrizionetipologia);
         if (cell) cell.innerText = parseFloat(t.valore).toFixed(2).replace(",", ".");
       });
     })
     .catch(err => console.error("Errore caricando tariffe:", err));
 }
+
 
 // Salva le tariffe modificate
 /*function salvaTariffe() {
@@ -1551,12 +1577,14 @@ function salvaTariffe() {
   document.querySelectorAll("#tabella-prezzi td[data-prestazione]").forEach(cell => {
     let prestazione = cell.dataset.prestazione;
     let apl = cell.dataset.apl || "";
+    let descrizionetipologia = cell.dataset.descrizionetipologia || "";
     let valore = parseFloat(cell.innerText.trim());
 
     if (!isNaN(valore)) {
       dati.push({
         prestazione: prestazione,
         apl: apl,
+        descrizionetipologia: descrizionetipologia,
         valore: valore
       });
     }
@@ -1587,7 +1615,7 @@ let text = cell.innerText.trim().replace(',', '.');
 
   if (isNaN(num) || num < 0 || num > 1000) {
     alert("❌ Inserisci un valore tra 0 e 1000");
-    cell.innerText = "0,00";
+    cell.innerText = "0.00";
   } else {
     cell.innerText = num.toFixed(2);
     cell.dataset.value = num.toFixed(2);
@@ -1619,13 +1647,35 @@ function resetData() {
   })
 }
 }
+function resetTariffe() {
+  if (confirm("Sei sicuro di voler cancellare tutte le tariffe?")) {
+    fetch("resetTariffe/", { method: "POST", headers: {"Content-Type": "application/json"} })
+    .then(response => response.json())
+    .then(data => {
+      if(data.Status === "ok"){
+          alert("Tariffe resettate con successo.");
+          location.reload();
+      }else{
+        alert("Errore nel res i dati.");
+      }
+    
+  })
+  .catch(error => {
+    console.error("Errore nel resettare i dati:", error);
+    alert("Errore nel resett i dati.");
+  })
+}
+}
 // SERVER A SALVARE I DATI IN LOCALE
 function saveData() {
   localStorage.setItem("fatturazioneData", JSON.stringify(originalData));
 }
 
 let tipoFattura = ''; // Variabile globale che tiene traccia del tipo di fattura selezionato
-function setFattura(tipo) {
+function setFattura(tipo, button) {
+  const allbtn = document.querySelectorAll(".btn-info");
+  allbtn.forEach(btn => btn.classList.remove("clicked"));
+  button.classList.add("clicked");
   tipoFattura = tipo;  // Imposta il tipo di fattura in base al bottone cliccato
 
   // Aggiorna la descrizione in base al tipo di fattura selezionato
@@ -1643,6 +1693,18 @@ function setFattura(tipo) {
     case 'minori_disabili_gravi':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break;
+    case 'minori_non_disabili':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'minori_non_disabili_bs':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'minori_non_disabili_bs_u6':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;   
+    case 'minori_non_disabili_Is':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;     
     case 'emergenza_caldo':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break; 
