@@ -1078,6 +1078,9 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     case 'disabili':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
+    case 'minori':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break;
     case 'minori_disabili_gravi':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
@@ -1230,7 +1233,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     "ANZ_NON_AUTO": "anziani_non_autosufficienti",
     "DISABILE": "disabili",
     "ANZ_AUTO": "anziani_autosufficienti",
-    "MINORI": "minori_disabili_gravi",
+    "MINORI": "minori",
     "EMERGENZA CALDO": "emergenza_caldo",
     "Minori non Disabili":"minori_non_disabili",
     "Minori non Disabili BS":"minori_non_disabili_bs",
@@ -1270,7 +1273,10 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             //console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
-          case 'minori_disabili_gravi':
+          case 'minori':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;
+            case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'minori_non_disabili':
@@ -1439,7 +1445,7 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     "ANZ_NON_AUTO": "anziani_non_autosufficienti",
     "DISABILE": "disabili",
     "ANZ_AUTO": "anziani_autosufficienti",
-    "MINORI": "minori_disabili_gravi",
+    "MINORI": "minori",
     "EMERGENZA CALDO": "emergenza_caldo",
     "Minori non Disabili":"minori_non_disabili",
     "Minori non Disabili BS":"minori_non_disabili_bs",
@@ -1675,6 +1681,7 @@ let tipoFattura = ''; // Variabile globale che tiene traccia del tipo di fattura
 function setFattura(tipo, button) {
   const allbtn = document.querySelectorAll(".btn-info");
   allbtn.forEach(btn => btn.classList.remove("clicked"));
+
   button.classList.add("clicked");
   tipoFattura = tipo;  // Imposta il tipo di fattura in base al bottone cliccato
 
@@ -1688,6 +1695,9 @@ function setFattura(tipo, button) {
       description = '<strong>Questa fattura includerà:</strong><br> Tutti i distretti';
       break;
     case 'disabili':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'minori':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break;
     case 'minori_disabili_gravi':
