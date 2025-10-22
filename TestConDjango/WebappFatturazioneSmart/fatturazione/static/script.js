@@ -1235,10 +1235,10 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     "ANZ_AUTO": "anziani_autosufficienti",
     "MINORI": "minori",
     "EMERGENZA CALDO": "emergenza_caldo",
-    "Minori non Disabili":"minori_non_disabili",
-    "Minori non Disabili BS":"minori_non_disabili_bs",
-    "Minori non Disabili BS U6":"minori_non_disabili_bs_u6",
-    "Minori non Disabili Is":"minori_non_disabili_Is",
+    "Minori non Disabili":"minori",
+    "Minori non Disabili BS":"minori",
+    "Minori non Disabili BS U6":"minori",
+    "Minori non Disabili Is":"minori",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     if(!meseCompleto){
@@ -1274,9 +1274,9 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             //console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
           case 'minori':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
-            case 'minori_disabili_gravi':
+            /*case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'minori_non_disabili':
@@ -1290,7 +1290,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             break;
           case 'minori_non_disabili_Is':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
-            break;  
+            break;  */
           case 'emergenza_caldo':
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
             break;
@@ -1447,10 +1447,10 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     "ANZ_AUTO": "anziani_autosufficienti",
     "MINORI": "minori",
     "EMERGENZA CALDO": "emergenza_caldo",
-    "Minori non Disabili":"minori_non_disabili",
-    "Minori non Disabili BS":"minori_non_disabili_bs",
-    "Minori non Disabili BS U6":"minori_non_disabili_bs_u6",
-    "Minori non Disabili Is":"minori_non_disabili_Is",
+    "Minori non Disabili":"minori",
+    "Minori non Disabili BS":"minori",
+    "Minori non Disabili BS U6":"minori",
+    "Minori non Disabili Is":"minori",
     };
     rowTipo = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     //console.log("valore rowTipo >>>>", rowTipo,"valore tipoFattura >>>>>> ", tipoFattura);
@@ -1703,7 +1703,7 @@ function setFattura(tipo, button) {
     case 'minori_disabili_gravi':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break;
-    case 'minori_non_disabili':
+    /*case 'minori_non_disabili':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break;
     case 'minori_non_disabili_bs':
@@ -1714,7 +1714,7 @@ function setFattura(tipo, button) {
       break;   
     case 'minori_non_disabili_Is':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
-      break;     
+      break;*/     
     case 'emergenza_caldo':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break; 
