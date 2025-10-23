@@ -321,7 +321,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: row["TIPOLOGIA"] || "",
-        distretto: row["Distretto"] || "Non specificato",
+        distretto: row["Distretto"] || "Non specificato" || row["DISTRETTO"],
         oretotmese: row["ORE ENTE"] || row["ORE"] || "",
         buonoservizio: row["BUONO SERVIZIO"] || row["ORE BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,

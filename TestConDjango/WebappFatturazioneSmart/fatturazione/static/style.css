@@ -180,7 +180,7 @@ main.flex-column {
   color: rgb(255, 255, 255);
 }
 .btn-info.clicked {
-  background-color: #00b7ff; /* Blu scuro */
+  background-color: #00c010; /* Blu scuro */
   color: white;
 }
 /*--- FINE ---*/
