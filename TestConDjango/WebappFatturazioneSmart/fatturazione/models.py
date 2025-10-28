@@ -36,7 +36,7 @@ class Utente(models.Model):
     tariffa =  models.FloatField(default=0)
     descrizionetipologia = models.CharField(max_length=16, blank=True)
     lavoratore = models.CharField(max_length=16, blank=True)
-
+    periodo_documento =  models.CharField(max_length=16, blank=True)
 
     totale_ore = models.FloatField(default=0)
 

@@ -72,7 +72,9 @@ window.onload = () => {
                                   "tariffa": u.tariffa,
                                   "Totale": u.totale_ore,
                                   "descrizionetipologia": u.descrizionetipologia,
-                                  "lavoratore": u.lavoratore
+                                  "lavoratore": u.lavoratore,
+                                  "periodo_documento": u.periodo_documento,
+
                                 }));
                                 if (originalData.length > 1) {
                                         const righeDaOrdinare = originalData.slice(0, -1);
@@ -87,7 +89,7 @@ window.onload = () => {
                                 }   
                               });*/
                               caricaTariffe();  
-                              console.log("valore>>> tariffa :::: ", originalData[69]["tariffa"]);
+                              //console.log("valore>>> tariffa :::: ", originalData[69]["tariffa"]);
                               aggiornaUIconData(originalData);
                               populateTable(originalData);
                               populateUtenteFilter();
@@ -131,7 +133,7 @@ function setupDropArea(fileInputId, source) {
             fileInput.files = e.dataTransfer.files;
             updateDropMessage(fileInput, dropMessage); // mostra nome file
             const conferma = confirm(`Vuoi caricare il file "${fileInput.files[0].name}"?`);
-            if (conferma) loadFile(source);
+            if (conferma) readFileWithProgress(fileInput.files[0], source);
         }
     });
 
@@ -142,9 +144,47 @@ function setupDropArea(fileInputId, source) {
     fileInput.addEventListener('change', () => {
         updateDropMessage(fileInput, dropMessage);
         const conferma = confirm(`Vuoi caricare il file "${fileInput.files[0].name}"?`);
-        if (conferma) loadFile(source);
+        if (conferma) readFileWithProgress(fileInput.files[0], source);
     });
 }
+
+function readFileWithProgress(file, source) {
+  const reader = new FileReader();
+  const modalEl = document.getElementById('loadingModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  const progressBar = document.getElementById('progressBar');
+
+  // Mostra il modal
+  modal.show();
+  progressBar.style.width = '0%';
+
+  reader.onprogress = e => {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = `${percent}%`;   }
+  };
+
+  reader.onloadend = () => {
+    progressBar.style.width = '100%';
+
+    // Chiudi dopo una piccola pausa per aggiornare la UI
+    setTimeout(() => {
+      modal.hide(); // ✅ usa la stessa istanza
+    }, 10000);
+
+    // Esegui il caricamento dopo la chiusura del modal
+    setTimeout(() => {
+      loadFile(source);
+    }, 300); //  ms per chiusura + margine
+  };
+
+  if (file.name.endsWith('.csv')) {
+    reader.readAsText(file);
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+}
+
 
 
 /* FUNZIONI UTILIZZATE PER GESTIRE IL CARICAMENTO INIZIALE */
@@ -207,7 +247,7 @@ function loadFile(source) {
 
       let jsonData;
       if(source === "oss"){
-          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0 });
+          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 });
       console.log("Aggiunto file oss 😂");
       }else if(source === "synergie"){
           let sheetName = workbook.SheetNames[1];
@@ -243,7 +283,9 @@ async function processData(data, source) {
         ...row,
         tipologia: "OSS",        
         apl: deriveAPL(source),
-        buonoservizio: row["BUONO SERVIZIO"] || 0,
+        oretotmese: row["BUONO SERVIZIO"] || 0,
+        buonoservizio: row["Note Cliente"] || row["NOTE CLIENTE"] || row["note cliente"] || row["Note cliente"] || "",
+        lavoratore: "",
       }));
       aggiornaMeseDaHeader(ossData);
       console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
@@ -329,6 +371,8 @@ async function processData(data, source) {
         codice_fiscale: row["CODICE FISCALE"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
         "Data di Nascita Cliente": row["Data di nascita beneficiario"] || "",
+        periodo_documento: row["Periodo documento"] || "Periodo non specificato",
+        lavoratore: row["Lavoratore"],
       }));
       /*const rigaTapperoBarbara = dataWithSource.find(row => row.descrizione === "ADAMO DOMENICO");
       if (rigaTapperoBarbara) {
@@ -351,6 +395,8 @@ async function processData(data, source) {
         "Codice Fiscale Cliente": row["CODICE FISCALE"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
         "Data di Nascita Cliente": row["Data di nascita beneficiario"] || "",
+        periodo_documento: row["Periodo documento"] || "Periodo non specificato",
+        lavoratore: "",
       }));
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData);
@@ -398,7 +444,9 @@ async function processData(data, source) {
         "tariffa": u.tariffa,
         "Totale": u.totale_ore,
         "descrizionetipologia": u.descrizionetipologia,
-        "lavoratore": u.lavoratore 
+        "lavoratore": u.lavoratore,
+        "periodo_documento": u.periodo_documento,
+
       }))
       
        if (originalData.length > 1) {
@@ -420,14 +468,15 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || "Non specificato",
-        oretotmese: row["ORE_LAV_MESE"] || "",
-        buonoservizio: row["ORE IN BUONO"] || 0,
+        distretto: row["CIRC."] || "Non specificato",
+        oretotmese: row["ORE IN BUONO"] || "",
+        buonoservizio: row["ORE_LAV_MESE"] || 0,
         "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
         "Codice Fiscale Cliente": row["CODICE FISCALE BENEFICIARIO"] || "",
         "Data di Nascita Cliente": formatDateIfValid(row["DATA NASCITA BENEFICIARIO"]),
         descrizionetipologia: row["TIPOLOGIA_UTENTE"] || "",
         lavoratore: row["LAVORATORE"],
+        periodo_documento: row["COMPETENZA"] || "Periodo non specificato",
       }));
       console.log("✅ Dati Synergie processati:", dataWithSource.slice(0, 2));
       allData = [...allData, ...dataWithSource];
@@ -445,6 +494,8 @@ async function processData(data, source) {
         "Data di Nascita Cliente": row["DATA NASCITA BENEFICIARIO"],
         descrizionetipologia: row["TIPOLOGIA_UTENTE"] || "",
         lavoratore: row["LAVORATORE"],
+        periodo_documento: row["COMPETENZA"] || "Periodo non specificato",
+
       }));
       console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
       console.log("Formatro dati Inviati ==>", dataWithSource);
@@ -495,7 +546,9 @@ async function processData(data, source) {
         "tariffa": u.tariffa,
         "Totale": u.totale_ore,
         "descrizionetipologia": u.descrizionetipologia,
-        "lavoratore": u.lavoratore 
+        "lavoratore": u.lavoratore,
+        "periodo_documento": u.periodo_documento,
+
       }))
       
        if (originalData.length > 1) {
@@ -524,6 +577,7 @@ async function processData(data, source) {
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
         descrizionetipologia: row["Descrizione tipologia"] || "",    
         lavoratore: row["Cognome Nome a.f."],    
+        periodo_documento: row["Periodo documento"] || "Periodo non specificato",
       }));
       console.log("✅ Dati Umana processati:", dataWithSource);
       allData = [...allData, ...dataWithSource];
@@ -539,6 +593,7 @@ async function processData(data, source) {
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
         descrizionetipologia: row["Descrizione tipologia"] || "",        
         lavoratore: row["Cognome Nome a.f."],
+        periodo_documento: row["Periodo documento"] || "Periodo non specificato",
       }));
 
       console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
@@ -590,10 +645,10 @@ async function processData(data, source) {
         "tariffa": u.tariffa,
         "Totale": u.totale_ore,
         "descrizionetipologia": u.descrizionetipologia,
-        "lavoratore": u.lavoratore 
-
+        "lavoratore": u.lavoratore,
+        "periodo_documento": u.periodo_documento,
       }))
-      
+      console.log("Periodo Documento >>>", originalData[0]);
        if (originalData.length > 1) {
         const righeDaOrdinare = originalData.slice(0, -1);
         righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
@@ -605,7 +660,7 @@ async function processData(data, source) {
 
       if (confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`)) {
         showPage('dati');
-      }      
+      } 
     }
 
   } catch (err) {
@@ -854,6 +909,8 @@ function populateTable(data) {
         totaleFormattato,
         descrizionetipologia: row.descrizionetipologia,
         lavoratore: row.lavoratore,
+        periodo_documento: row.periodo_documento,
+
       });
       //console.log("📦 Contenuto visualizedData[0]-in populatetable:", visualizedData[2]);
     //console.log(`▶ Riga in rendering: descrizione=${descrizione}, tipologia=${tipologia}, apl=${apl}`);
@@ -1110,7 +1167,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
   const interventoCostoMensileIndex = headers.indexOf("Intervento_CostoMensile") + 1;
 
   // Aggiungi la riga per il mese (e il distretto) per entrambi i fogli
-  const rowMeseNord = nordWorksheet.addRow([`Mese: ${meseCompleto}`]);
+  const rowMeseNord = nordWorksheet.addRow([`Cooperativa Animazione Valdocco - Domiciliarità Torino`]);
   nordWorksheet.mergeCells(1, 1, 1, headers.length); // Unisci le celle per il mese
   rowMeseNord.height = 30;
   rowMeseNord.eachCell((cell) => {
@@ -1241,15 +1298,20 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     "Minori non Disabili Is":"minori",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
-    if(!meseCompleto){
-      meseCompleto = "Valore non Specificato";
-    }
     //console.log("🙌Valore Apl  ==> ", row.apl, "🙌Valore tipoUtenza  ==> ", tipoUtenza   );
     }
     /*if(tipoUtenza === "tipo_utenza_non_definito")
       {
             console.log("Nome Utente Senza Utenza ===>", row.descrizione, "APL ==>", row.apl , "Tipologia Valore ==> ", tipologiaValue);          
       }*/
+     let data_periodo="";
+    if(!(meseCompleto == undefined))
+    {
+      data_periodo = meseCompleto;
+    }
+    else{
+      data_periodo = row.periodo_documento;
+    }
      
     if (tipoFattura === tipoUtenza || tipoFattura === "Tutte le categorie") {
         // Definisci la riga di dati in base al tipo di fattura
@@ -1261,20 +1323,20 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
               row.tariffa --> Tariffa oraria(Costo Mensile)
               row.buonoservizio --> Tipo Intervento*/
               
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl]; 
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl]; 
             //console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
 
       break;
           case 'anziani_autosufficienti':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'disabili':
             //console.log("👌👌: ",dataRow);
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             //console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
           case 'minori':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
             /*case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
@@ -1295,7 +1357,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
             break;
           case 'Tutte le categorie':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           default:
             dataRow = [row.descrizione, row.dataNascita, row.indirizzo, row.codiceFiscale, print_distretto];

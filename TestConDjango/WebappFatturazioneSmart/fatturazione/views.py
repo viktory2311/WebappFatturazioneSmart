@@ -46,7 +46,7 @@ def salva_dati(request):
 
         body = json.loads(request.body)
         #logger.info(f"Ricevuti {len(body)} record dal frontend")
-        print(f"📦 Corpo ricevuto: {request.body}")
+        #print(f"📦 Corpo ricevuto: {request.body}")
         #print(f"Ricevuti {len(body)} record dal frontend")
 
         for row in body:
@@ -76,6 +76,18 @@ def salva_dati(request):
             tipologia = row.get("tipologia") or row.get("TIPOLOGIA") or ""
             apl = row.get("apl") or ""
 
+            #ore tot mese
+            raw_ore= row.get("buonoservizio", 0)
+            def parse_ore(value):
+                if value in (None, ""):
+                    return 0.0
+                if isinstance(value, (int, float)):
+                    return float(value)
+                match = re.search(r'\d+(?:[.,]\d+)?', str(value))
+                return float(match.group().replace(",", ".")) if match else 0.0
+            buonoservizio = parse_ore(raw_ore) 
+
+            
             # Funzione helper per campi numerici
             def parse_float(*keys):
                 for key in keys:
@@ -89,6 +101,8 @@ def salva_dati(request):
                 return 0
             codice_fiscale = (row.get("Codice Fiscale Cliente") or "").strip()
             utente = Utente.objects.all()
+
+            
             #print(list(Utente.objects.all().values()))
             # defaults comuni (non anagrafici)
             #print(f"Chiavi disponibili: {row.keys()}")
@@ -122,16 +136,18 @@ def salva_dati(request):
                 "totale_ore": parse_float("Totale", "0.00"),
                 "data_riferimento": data_riferimento,
                 "oretotmese": row.get("oretotmese", 0),
-                "buonoservizio": row.get("buonoservizio", 0),
                 "tariffa": tariffa_val or 0,
                 "descrizionetipologia": row.get("descrizionetipologia",0),
                 "lavoratore": row.get("lavoratore",0),
+                "periodo_documento": row.get("periodo_documento",0),
             }
             #print(f"Nome Utente: {row.get('C - Anziano autosufficiente')}")
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
             #IL print qui sotto serve per debug delle tipologie non mappate delle APL
             #print(f"Descrizione tipologia: {defaults['descrizionetipologia']}")
-
+            
+            if buonoservizio:
+                defaults["buonoservizio"] = buonoservizio
             # aggiorno tipologia e apl solo se arrivano valorizzati
             if tipologia:
                 defaults["tipologia"] = tipologia
@@ -147,36 +163,52 @@ def salva_dati(request):
             if cf not in (None, "", 0):
                 defaults["codice_fiscale"] = row.get("Codice Fiscale Cliente")
             else:
-                defaults["codice_fiscale"] = " CF Mancante"
+                defaults["codice_fiscale"] = "CF Mancante"
 
+            #calcolo del periodo del documento
+            periodo_documento = calcola_periodo_documento(row.get("periodo_documento"))
+            defaults["periodo_documento"] = periodo_documento
+            #print(f"periodo_documento", periodo_documento)
             # gestione distretto come prima → AGGIORNO SOLO SE DISTRETTO VALORIZZATO
-            distretto = (row.get("distretto") or "").strip()
+
             ore = row.get("oretotmese")
-            if distretto and ore not in (None, "", 0):
-                distretto_value = None
-                d = distretto.lower()
-                if "nord ovest" in d:
-                    distretto_value = "Nord Ovest"
-                    defaults["nord_ovest"] = ore
-                elif "sud ovest" in d:
-                    distretto_value = "Sud Ovest"
-                    defaults["sud_ovest"] = ore
-                elif "sud est" in d:
-                    distretto_value = "Sud Est"
-                    defaults["sud_est"] = ore
-                elif "sud" in d:
-                    distretto_value = "Sud"
-                    defaults["distretto_sud"] = ore               
-                elif "nord est" in d:
-                    distretto_value = "Nord Est"
-                    defaults["distretto_nord_est"] = ore                    
-                elif "nord" in d:
-                    distretto_value = "Nord"
-                    defaults["distretto_nord"] = ore              
-                    
-                else:
-                    distretto_value = "Non Specificato"
-                    defaults["distretto"] = ore
+            
+            distretto_value=""            
+            if row.get("distretto") in (7,6):
+                distretto_value = "Nord Est"
+                defaults["distretto_nord_est"] = ore
+            elif row.get("distretto") in (4,5):
+                distretto_value = "Nord Ovest"
+                defaults["nord_ovest"] = ore
+            elif row.get("distretto") == 2:
+                distretto_value = "Sud Ovest"
+                defaults["sud_ovest"] = ore
+            else:
+                distretto = (row.get("distretto") or "").strip()
+                if distretto and ore not in (None, "", 0):
+                    distretto_value = None
+                    d = distretto.lower()
+                    if "nord ovest" in d:
+                        distretto_value = "Nord Ovest"
+                        defaults["nord_ovest"] = ore
+                    elif "sud ovest" in d:
+                        distretto_value = "Sud Ovest"
+                        defaults["sud_ovest"] = ore
+                    elif "sud est" in d:
+                        distretto_value = "Sud Est"
+                        defaults["sud_est"] = ore
+                    elif "sud" in d:
+                        distretto_value = "Sud"
+                        defaults["distretto_sud"] = ore               
+                    elif "nord est" in d:
+                        distretto_value = "Nord Est"
+                        defaults["distretto_nord_est"] = ore                    
+                    elif "nord" in d:
+                        distretto_value = "Nord"
+                        defaults["distretto_nord"] = ore              
+                    else:
+                        distretto_value = "Non Specificato"
+                        defaults["distretto"] = ore
 
                 if distretto_value:
                     defaults["distretto"] = distretto_value       
@@ -187,18 +219,27 @@ def salva_dati(request):
             # Rimuovo le chiavi già passate esplicitamente
             clean_defaults.pop("tipologia", None)
             clean_defaults.pop("apl", None)
-            #ne caso oretotmese sia vuoto quindi con "", si restituisce 0
-            oretotmese = row.get("oretotmese")
-            oretotmese = float(oretotmese) if oretotmese not in (None, "") else 0
+            #nel caso oretotmese sia vuoto quindi con "", si restituisce 0
+            raw_ore = row.get("buonoservizio")
+
+            def parse_ore(value):
+                if value in (None, ""):
+                    return 0.0
+                if isinstance(value, (int, float)):
+                    return float(value)
+                match = re.search(r'\d+(?:[.,]\d+)?', str(value))
+                return float(match.group().replace(",", ".")) if match else 0.0
+            buonoservizio = parse_ore(raw_ore) 
+
             utente, created = Utente.objects.update_or_create(
-                codice_fiscale=codice_fiscale,
-                oretotmese=oretotmese,
+                codice_fiscale = codice_fiscale if codice_fiscale not in (None, "") else "CF Mancante",
+                oretotmese= row.get("oretotmese",""),
                 lavoratore= row.get("lavoratore", ""),
                 defaults={
                     "nome": nome.strip(),
                     "tipologia": tipologia,
                     "apl": apl,
-                    "oretotmese": oretotmese,
+                    "oretotmese": row.get("oretotmese",""),
                     "lavoratore": row.get("lavoratore", ""),
                     **clean_defaults
                 }
@@ -314,3 +355,47 @@ def lista_tariffe(request):
     return JsonResponse(tariffe, safe=False)
 def home(request):
     return render(request, 'index.html')    
+def calcola_periodo_documento(periodo):
+    if not periodo:
+        return None
+
+    periodo = str(periodo).strip()
+
+    # Caso 1: formato "MM/YYYY"
+    if "/" in periodo:
+        try:
+            mese, anno = periodo.split("/")
+        except ValueError:
+            return None
+
+    # Caso 2: formato "YYYYMM" o "YYYYM"
+    elif len(periodo) >= 6 and periodo.isdigit():
+        anno = periodo[:4]
+        mese = periodo[4:]
+    else:
+        return None
+
+    # Normalizza mese in intero (rimuove eventuali zeri iniziali se ci sono)
+    try:
+        mese = int(mese)
+    except ValueError:
+        return None
+
+    # Dizionario dei mesi
+    mesi = {
+        1: "Gennaio",
+        2: "Febbraio",
+        3: "Marzo",
+        4: "Aprile",
+        5: "Maggio",
+        6: "Giugno",
+        7: "Luglio",
+        8: "Agosto",
+        9: "Settembre",
+        10: "Ottobre",
+        11: "Novembre",
+        12: "Dicembre"
+    }
+
+    nome_mese = mesi.get(mese, "Mese sconosciuto")
+    return nome_mese
