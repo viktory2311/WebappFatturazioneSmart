@@ -247,7 +247,7 @@ function loadFile(source) {
 
       let jsonData;
       if(source === "oss"){
-          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 1 });
+          jsonData = XLSX.utils.sheet_to_json(sheet, { range: 0 });
       console.log("Aggiunto file oss 😂");
       }else if(source === "synergie"){
           let sheetName = workbook.SheetNames[1];
@@ -588,7 +588,7 @@ async function processData(data, source) {
         apl: deriveAPL(source),
         tipologia: "AF",
         distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || "Non specificato",
-        oretotmese: row["Ore_Inbuono"] || "",
+        oretotmese: row["Ore_Inbuono"] || 0,
         buonoservizio: row["Ore_Lav_Mese"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
         descrizionetipologia: row["Descrizione tipologia"] || "",        

@@ -230,16 +230,16 @@ def salva_dati(request):
                 match = re.search(r'\d+(?:[.,]\d+)?', str(value))
                 return float(match.group().replace(",", ".")) if match else 0.0
             buonoservizio = parse_ore(raw_ore) 
-
+            #print(f"ORE TOT MESE >>> {row.get("oretotmese")}")
             utente, created = Utente.objects.update_or_create(
                 codice_fiscale = codice_fiscale if codice_fiscale not in (None, "") else "CF Mancante",
-                oretotmese= row.get("oretotmese",""),
+                oretotmese= row.get("oretotmese", 0.0),
                 lavoratore= row.get("lavoratore", ""),
                 defaults={
                     "nome": nome.strip(),
                     "tipologia": tipologia,
                     "apl": apl,
-                    "oretotmese": row.get("oretotmese",""),
+                    "oretotmese": row.get("oretotmese",0.0),
                     "lavoratore": row.get("lavoratore", ""),
                     **clean_defaults
                 }
