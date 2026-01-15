@@ -290,7 +290,12 @@ async function processData(data, source) {
       aggiornaMeseDaHeader(ossData);
       console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
       //console.log("✅ Dati OSS processati:", ossData);
-      console.log("Formatro dati Inviati ==>", ossData);
+      console.log("Formato dati Inviati ==>", ossData);
+
+      if (!doubleCodiceFiscaleCheck(ossData)) {
+        return; // ⛔ BLOCCA TUTTO
+      }
+
       const res = await fetch("/salva/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -351,7 +356,6 @@ async function processData(data, source) {
       }
       populateTable(originalData);
       populateUtenteFilter();
-      
       if (confirm("Hai caricato il file OSS. Vuoi aprire la pagina dati ora o aggiungere altri file?")) {
         showPage('dati');
       }
@@ -398,6 +402,9 @@ async function processData(data, source) {
         periodo_documento: row["Periodo documento"] || "Periodo non specificato",
         lavoratore: "",
       }));
+      if (!doubleCodiceFiscaleCheck(dataWithSource)) {
+        return; // ⛔ BLOCCA TUTTO
+      }
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData);
       
@@ -500,6 +507,9 @@ async function processData(data, source) {
       console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
       console.log("Formatro dati Inviati ==>", dataWithSource);
 
+      if (!doubleCodiceFiscaleCheck(dataWithSource)) {
+        return; // ⛔ BLOCCA TUTTO
+      }
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
       
@@ -601,7 +611,9 @@ async function processData(data, source) {
       console.log("Formatro dati Inviati ==>", dataWithSource);
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
-      
+       if (!doubleCodiceFiscaleCheck(dataWithSource)) {
+        return; // ⛔ BLOCCA TUTTO
+      }
       // Salva i dati e poi carica utenti aggiornati
       await fetch("/salva/", {
         method: "POST",
@@ -815,7 +827,7 @@ function populateTable(data) {
     
   let totaleUtenti = 0;
       //console.log("Dati in populateTable:", data.slice(0, 3)); // Log dei primi 2 record per verificaù
-      console.log("Dati in populateTable:", data);
+      //console.log("Dati in populateTable:", data);
   data.forEach(row => {
     // INSERIMENTO UTENTE
     const descrizione = row.Descrizione || row.nome || "";
@@ -1105,6 +1117,12 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
     alert("Salva i Prezzi delle Tariffe");
     return;
   }
+
+  if (!tipoFattura || tipoFattura === "") {
+    alert("⚠️ Seleziona un tipo di fattura prima di esportare il file Excel.");
+    return;
+  }
+
   //console.log("📦 Contenuto visualizedData:", visualizedData);
 
   /***  Ricavo il mese dal campo Data (YYYY-MM-DD)***/
@@ -1249,10 +1267,9 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
       } else if (nordOvest > 0) {
         print_distretto = "Nord Ovest";  // Assegna il nome del distretto Nord Ovest
       }else if (distrettoNordEst > 0) {
-        print_distretto = "Nord Est";  // Assegna il nome del distretto Nord Ovest
+        print_distretto = "Nord Est";  // Assegna il nome del distretto Nord Est
       }
     }
-
     // Se il distretto è legato a Sud
     else if (isSud) {
       if (distrettoSud > 0) {
@@ -1276,6 +1293,12 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
       tipoUtenza = "minori_disabili_gravi"; 
     }else if(row.disabile > 0){
       tipoUtenza = "disabili";
+    }else if(row.contrattiPrivati > 0){
+      tipoUtenza = "Contratti Privati";
+    }else if(row.assistenzaDomiciliareIntegrata > 0){
+      tipoUtenza = "ADI";
+    }else if(row.progettoSOD > 0){
+      tipoUtenza = "Progetto SOD";
     }else{
       let mappaTipologia = {
     "ANZIANI AUTOSUFFICIENTI": "anziani_autosufficienti",
@@ -1323,20 +1346,19 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
               row.tariffa --> Tariffa oraria(Costo Mensile)
               row.buonoservizio --> Tipo Intervento*/
               
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl]; 
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl]; 
             //console.log("Data Row in dettaglio(Dopo):", dataRow);  // Verifica che i dati siano corretti
-
-      break;
+            break;
           case 'anziani_autosufficienti':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           case 'disabili':
             //console.log("👌👌: ",dataRow);
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             //console.log("Il Tipo di Utenza ===> ", tipoUtenza,"Nome Utenza:", row.descrizione,"Data Row: ", dataRow);
             break;
           case 'minori':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
             /*case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
@@ -1357,7 +1379,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
             break;
           case 'Tutte le categorie':
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, row.periodo_documento, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;
           default:
             dataRow = [row.descrizione, row.dataNascita, row.indirizzo, row.codiceFiscale, print_distretto];
@@ -1790,3 +1812,71 @@ function setFattura(tipo, button) {
   // Aggiorna la sezione della descrizione
   document.getElementById('fattura-description').innerHTML = description;
 }
+
+function doubleCodiceFiscaleCheck(data) {
+  const cfMap = {};
+  const duplicati = [];
+  const senzaCF = [];
+
+  data.forEach(row => {
+    const nome = row.Descrizione || "Nome non disponibile";
+    const cfRaw = row["Codice Fiscale Cliente"];
+    //USA IL CODICE SOTTO SOLO PER FARE DEBUG:
+                                              /*data.forEach((row, index) => {
+                                                console.log("🔎 RIGA", index);
+                                                console.log("Descrizione:", row.Descrizione);
+                                                console.log("CF RAW:", row["Codice Fiscale Cliente"]);
+                                                console.log("Tipo:", typeof row["Codice Fiscale Cliente"]);
+                                              });*/
+    // ❌ Codice fiscale mancante
+    if (!cfRaw || !cfRaw.toString().trim()) {
+      senzaCF.push(nome);
+      return;
+    }
+
+    // Normalizzazione CF
+    const cf = cfRaw.toString().trim().toUpperCase();
+
+    if (!cfMap[cf]) {
+      cfMap[cf] = [];
+    }
+    cfMap[cf].push(nome);
+  });
+
+  // Trova duplicati
+  for (const cf in cfMap) {
+    if (cfMap[cf].length > 1) {
+      duplicati.push({
+        cf,
+        utenti: cfMap[cf]
+      });
+    }
+  }
+
+  // ❌ Se esiste QUALSIASI problema → blocca
+  if (duplicati.length > 0 || senzaCF.length > 0) {
+    let msg = "❌ SALVATAGGIO BLOCCATO\n\n";
+
+    if (duplicati.length > 0) {
+      msg += "⚠️ Codici fiscali duplicati:\n\n";
+      duplicati.forEach(d => {
+        msg += `CF: ${d.cf}\n`;
+        msg += `Utenti: ${d.utenti.join(", ")}\n\n`;
+      });
+    }
+
+    if (senzaCF.length > 0) {
+      msg += "⚠️ Utenti senza codice fiscale:\n\n";
+      msg += senzaCF.join(", ");
+      msg += "\n\n";
+    }
+
+    alert(msg);
+    console.warn("Duplicati CF:", duplicati);
+    console.warn("Senza CF:", senzaCF);
+    return false; // ⛔ BLOCCA SALVATAGGIO
+  }
+
+  return true; // ✅ TUTTO OK
+}
+

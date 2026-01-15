@@ -125,7 +125,7 @@ def salva_dati(request):
                 "minori_disabili_gravi": parse_float("Minori Disabili Gravi", "C - Minori Disabili Gravi", "0.00"),
                 "nord_ovest": parse_float("Nord Ovest", "C - Nord Ovest"),
                 "distretto_nord": parse_float("Distretto Nord", "C - DISTRETTO NORD", "0.00"),
-                "distretto_nord_est": 0,
+                "distretto_nord_est": parse_float("Nord Est Ovest", "C - Nord Est"),
                 "distretto_sud": parse_float("Distretto Sud", "C - DISTRETTO SUD", "0.00"),
                 "pnrr": parse_float("PNRR", "C - PNRR", "0.00"),
                 "progetto_sod": parse_float("Progetto SOD", "C - Progetto SOD", "0.00"),
