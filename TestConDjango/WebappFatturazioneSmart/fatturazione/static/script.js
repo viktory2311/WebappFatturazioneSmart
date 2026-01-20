@@ -367,7 +367,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: row["TIPOLOGIA"] || "",
-        distretto: row["Distretto"] || "Non specificato" || row["DISTRETTO"],
+        distretto: row["Distretto"] || row["DISTRETTO"] || "Non specificato",
         oretotmese: row["ORE ENTE"] || row["ORE"] || "",
         buonoservizio: row["BUONO SERVIZIO"] || row["ORE BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
@@ -391,7 +391,7 @@ async function processData(data, source) {
         descrizione: row["Ragione sociale"] || "",
         tipologia: row.tipologia || row["TIPOLOGIA"] || "",
         apl: row.apl || "",
-        distretto: row["Distretto"] || "Non specificato",
+        distretto: row["Distretto"] || row["DISTRETTO"] || "Non specificato",
         oretotmese: row["ORE ENTE"] || row["ORE"] || 0,
         buonoservizio: row["BUONO SERVIZIO"] || row["ORE BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
@@ -402,7 +402,7 @@ async function processData(data, source) {
         periodo_documento: row["Periodo documento"] || "Periodo non specificato",
         lavoratore: "",
       }));
-      if (!doubleCodiceFiscaleCheck(dataWithSource)) {
+      if (!doubleCodiceFiscaleCheck(dataWithSource, source)) {
         return; // ⛔ BLOCCA TUTTO
       }
 
@@ -507,7 +507,7 @@ async function processData(data, source) {
       console.log("Headers dati inviati ==>", Object.keys(dataWithSource[0]));
       console.log("Formatro dati Inviati ==>", dataWithSource);
 
-      if (!doubleCodiceFiscaleCheck(dataWithSource)) {
+      if (!doubleCodiceFiscaleCheck(dataWithSource, source)) {
         return; // ⛔ BLOCCA TUTTO
       }
 
@@ -611,7 +611,7 @@ async function processData(data, source) {
       console.log("Formatro dati Inviati ==>", dataWithSource);
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
-       if (!doubleCodiceFiscaleCheck(dataWithSource)) {
+       if (!doubleCodiceFiscaleCheck(dataWithSource, source)) {
         return; // ⛔ BLOCCA TUTTO
       }
       // Salva i dati e poi carica utenti aggiornati
@@ -1513,7 +1513,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
 function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
   // Filtra i dati in base al tipo di fattura e al distretto
   const datiFiltrati = visualizedData.filter(row => {
-    let rowTipo = "";
+    let rowTipo = ""; 
     const isRigaNord = row.nordOvest > 0 || row.distrettoNord > 0 || row.distrettoNordEst > 0;
     const isRigaSud = row.sudOvest > 0 || row.distrettoSud > 0 || row.sudEst > 0;
     const mappaTipologia = {
@@ -1539,7 +1539,7 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     rowTipo = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     //console.log("valore rowTipo >>>>", rowTipo,"valore tipoFattura >>>>>> ", tipoFattura);
     return (
-      tipoFattura === rowTipo &&
+      (tipoFattura === rowTipo || tipoFattura === "Tutte le categorie") &&
       ((isNord && isRigaNord) || (!isNord && isRigaSud))
     );
   });
@@ -1549,14 +1549,13 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
   // Calcolo riepilogo
   let riepilogo = {};
   datiFiltrati.forEach(row => {
-    let key = `${row.tipologia}|${row.apl || ""}|${row.fattura_numero || ""}`;
+    let key = `${row.tipologia}|${row.apl || ""}`;
     if (!riepilogo[key]) {
       riepilogo[key] = {
         descrizione: `ore ${row.tipologia.toLowerCase()} ${row.apl || ""}`.trim(),
         costoOrario: parseFloat(row.tariffa) || 0,
         ore: 0,
         totale: 0,
-        fattura: row.fattura_numero || ""
       };
     }
     const ore = parseFloat(row.totaleFormattato) || 0;
@@ -1567,7 +1566,7 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
 
   // Crea intestazione
   ws.addRow([]);
-  const header = ws.addRow(["Descrizione", "Costo orario", "Ore", "Totale", "Fattura n."]);
+  const header = ws.addRow(["Descrizione", "Costo orario", "Ore", "Totale"]);
   header.eachCell(cell => {
     cell.font = { bold: true };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD700" } };
@@ -1575,7 +1574,7 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
 
   // Inserisci dati e applica formattazione
   Object.values(riepilogo).forEach(item => {
-    const row = ws.addRow([item.descrizione, item.costoOrario, item.ore, item.totale, item.fattura]);
+    const row = ws.addRow([item.descrizione, item.costoOrario, item.ore, item.totale]);
     row.eachCell(cell => {
       cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     });
@@ -1813,47 +1812,102 @@ function setFattura(tipo, button) {
   document.getElementById('fattura-description').innerHTML = description;
 }
 
-function doubleCodiceFiscaleCheck(data) {
+function doubleCodiceFiscaleCheck(data, source) {
   const cfMap = {};
   const duplicati = [];
   const senzaCF = [];
 
+  // ✅ 1) SYNERGIE: controllo SOLO informativo (non bloccante)
+  if (source === "synergie") {
+  const mapSynergie = {};
+  const duplicati = [];
+
+  data.forEach((row, index) => {
+    const nome = row.Descrizione || row["FIRMATARIO"] || "Nome non disponibile";
+    const cfRaw = row["Codice Fiscale Cliente"] || row["COD. FISCALE BENEFICIARIO"];
+    const lavoratoreRaw = row["LAVORATORE"];
+    const oreRaw = row["ORE IN BUONO"];
+
+    if (!cfRaw || !cfRaw.toString().trim()) return;
+
+    const cf = cfRaw.toString().trim().toUpperCase();
+    const lavoratore = (lavoratoreRaw ?? "").toString().trim().toUpperCase();
+
+    // Normalizza ore: "2,5" -> "2.5", vuoto -> ""
+    const ore = (oreRaw ?? "")
+      .toString()
+      .trim()
+      .replace(",", "."); // se vuoi anche parseFloat, dimmelo
+
+    // ✅ adesso identiche = CF + LAVORATORE + ORE
+    const key = `${cf}|${lavoratore}|${ore}`;
+
+    if (!mapSynergie[key]) mapSynergie[key] = [];
+    mapSynergie[key].push({ nome, index, ore });
+  });
+
+  for (const key in mapSynergie) {
+    if (mapSynergie[key].length > 1) {
+      const first = mapSynergie[key][0];
+      const [cf, lavoratore, ore] = key.split("|");
+
+      duplicati.push({
+        cf,
+        lavoratore,
+        ore,
+        righe: mapSynergie[key].map(x => x.index + 1),
+        utenti: mapSynergie[key].map(x => x.nome),
+      });
+    }
+  }
+
+  if (duplicati.length > 0) {
+    let msg = "⚠️ AVVISO SYNERGIE (non bloccante)\n\n";
+    msg += "Righe identiche trovate (stesso CF, stesso LAVORATORE e stesse ORE IN BUONO).\n";
+    msg += "Il salvataggio NON viene bloccato.\n\n";
+
+    duplicati.forEach(d => {
+      msg += `CF: ${d.cf}\n`;
+      msg += `LAVORATORE: ${d.lavoratore || "(vuoto)"}\n`;
+      msg += `ORE IN BUONO: ${d.ore || "(vuoto)"}\n`;
+      msg += `Righe: ${d.righe.join(", ")}\n`;
+      msg += `Utenti: ${d.utenti.join(", ")}\n\n`;
+    });
+
+    alert(msg);
+    console.warn("Synergie - righe identiche (non bloccante):", duplicati);
+  }
+
+  return true;
+}
+
+  // ✅ 2) UMANA / GIGROUP: nessun controllo
+  if (source === "umana" || source === "gigroup") {
+    return true;
+  }
+
+  // ✅ 3) TUTTI GLI ALTRI: controllo BLOCCANTE come prima (duplicato CF)
   data.forEach(row => {
-    const nome = row.Descrizione || "Nome non disponibile";
-    const cfRaw = row["Codice Fiscale Cliente"];
-    //USA IL CODICE SOTTO SOLO PER FARE DEBUG:
-                                              /*data.forEach((row, index) => {
-                                                console.log("🔎 RIGA", index);
-                                                console.log("Descrizione:", row.Descrizione);
-                                                console.log("CF RAW:", row["Codice Fiscale Cliente"]);
-                                                console.log("Tipo:", typeof row["Codice Fiscale Cliente"]);
-                                              });*/
-    // ❌ Codice fiscale mancante
+    const nome = row.Descrizione || row["FIRMATARIO"] || "Nome non disponibile";
+    const cfRaw = row["Codice Fiscale Cliente"] || row["COD. FISCALE BENEFICIARIO"];
+
     if (!cfRaw || !cfRaw.toString().trim()) {
       senzaCF.push(nome);
       return;
     }
 
-    // Normalizzazione CF
     const cf = cfRaw.toString().trim().toUpperCase();
 
-    if (!cfMap[cf]) {
-      cfMap[cf] = [];
-    }
+    if (!cfMap[cf]) cfMap[cf] = [];
     cfMap[cf].push(nome);
   });
 
-  // Trova duplicati
   for (const cf in cfMap) {
     if (cfMap[cf].length > 1) {
-      duplicati.push({
-        cf,
-        utenti: cfMap[cf]
-      });
+      duplicati.push({ cf, utenti: cfMap[cf] });
     }
   }
 
-  // ❌ Se esiste QUALSIASI problema → blocca
   if (duplicati.length > 0 || senzaCF.length > 0) {
     let msg = "❌ SALVATAGGIO BLOCCATO\n\n";
 
@@ -1874,9 +1928,9 @@ function doubleCodiceFiscaleCheck(data) {
     alert(msg);
     console.warn("Duplicati CF:", duplicati);
     console.warn("Senza CF:", senzaCF);
-    return false; // ⛔ BLOCCA SALVATAGGIO
+    return false;
   }
 
-  return true; // ✅ TUTTO OK
+  return true;
 }
 
