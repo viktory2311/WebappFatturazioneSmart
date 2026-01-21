@@ -471,7 +471,7 @@ async function processData(data, source) {
     }else if (source === "synergie") {
  const dataWithSource = data.map(row => ({
         ...row,
-        descrizione: row["FIRMATARIO"] || " ",
+        descrizione: [row["NOME BENEFICIARIO"], row["COGNOME BENEFICIARIO"]].filter(Boolean).join(" ") || "Nome non disponibile",        
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
@@ -489,7 +489,7 @@ async function processData(data, source) {
       allData = [...allData, ...dataWithSource];
 
       const minimalData = dataWithSource.map(row => ({
-        descrizione: row["FIRMATARIO"] || " ",
+        descrizione: [row["NOME BENEFICIARIO"], row["COGNOME BENEFICIARIO"]].filter(Boolean).join(" ") || "Nome non disponibile",        
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
@@ -1104,17 +1104,19 @@ select_distretto.innerHTML = `
 
 
 /* ESPORTAZIONE IN FOMATO EXCEL */
-async function exportExcel() {
-
-let tariffa = visualizedData[0]["tariffa"];           // tariffa della prima riga
-let ore = visualizedData[0]["totaleFormattato"];      // ore totali della prima riga
-
-let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
+async function exportExcel() {  
   if (!visualizedData || visualizedData.length === 0) {
     alert("Nessun dato da esportare!");
     return;
-  }else if (totaleFatturato === "€ 0.00") {
-    alert("Salva i Prezzi delle Tariffe");
+  }
+  const rowValida = visualizedData.find(r => {
+  const tariffa = Number(r.tariffa) || 0;
+  const ore = Number(r.totaleFormattato) || 0;
+  return tariffa > 0 && ore > 0;
+  });
+
+  if (!rowValida) {
+    alert("Salva i Prezzi delle Tariffe (nessuna riga con ore e tariffa > 0)");
     return;
   }
 
@@ -1359,6 +1361,7 @@ let totaleFatturato = "€ " + parseFloat(tariffa * ore).toFixed(2);
             break;
           case 'minori':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            //console.log("Data Row: ", visualizedData);
             break;
             /*case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
@@ -1827,34 +1830,39 @@ function doubleCodiceFiscaleCheck(data, source) {
     const cfRaw = row["Codice Fiscale Cliente"] || row["COD. FISCALE BENEFICIARIO"];
     const lavoratoreRaw = row["LAVORATORE"];
     const oreRaw = row["ORE IN BUONO"];
+    const tipologia = row["Descrizione tipologia"] || row["TIPOLOGIA_UTENTE"] || row["TIPOLOGIA"] || row["tipologia"] || row["Tipologia"];
 
     if (!cfRaw || !cfRaw.toString().trim()) return;
 
     const cf = cfRaw.toString().trim().toUpperCase();
     const lavoratore = (lavoratoreRaw ?? "").toString().trim().toUpperCase();
 
-    // Normalizza ore: "2,5" -> "2.5", vuoto -> ""
     const ore = (oreRaw ?? "")
       .toString()
       .trim()
-      .replace(",", "."); // se vuoi anche parseFloat, dimmelo
+      .replace(",", ".");
 
-    // ✅ adesso identiche = CF + LAVORATORE + ORE
+    // 🔑 identiche = CF + LAVORATORE + ORE
     const key = `${cf}|${lavoratore}|${ore}`;
 
     if (!mapSynergie[key]) mapSynergie[key] = [];
-    mapSynergie[key].push({ nome, index, ore });
+    mapSynergie[key].push({
+      nome,
+      index,
+      ore,
+      tipologia
+    });
   });
 
   for (const key in mapSynergie) {
     if (mapSynergie[key].length > 1) {
-      const first = mapSynergie[key][0];
       const [cf, lavoratore, ore] = key.split("|");
 
       duplicati.push({
         cf,
         lavoratore,
         ore,
+        tipologia: mapSynergie[key][0].tipologia, // 🔹 basta la prima
         righe: mapSynergie[key].map(x => x.index + 1),
         utenti: mapSynergie[key].map(x => x.nome),
       });
@@ -1868,6 +1876,7 @@ function doubleCodiceFiscaleCheck(data, source) {
 
     duplicati.forEach(d => {
       msg += `CF: ${d.cf}\n`;
+      msg += `TIPOLOGIA: ${d.tipologia || "(vuoto)"}\n`;
       msg += `LAVORATORE: ${d.lavoratore || "(vuoto)"}\n`;
       msg += `ORE IN BUONO: ${d.ore || "(vuoto)"}\n`;
       msg += `Righe: ${d.righe.join(", ")}\n`;

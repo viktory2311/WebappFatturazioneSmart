@@ -136,11 +136,13 @@ def salva_dati(request):
                 "totale_ore": parse_float("Totale", "0.00"),
                 "data_riferimento": data_riferimento,
                 "oretotmese": row.get("oretotmese", 0),
-                "tariffa": tariffa_val or 0,
                 "descrizionetipologia": row.get("descrizionetipologia",0),
                 "lavoratore": row.get("lavoratore",0),
                 "periodo_documento": row.get("periodo_documento",0),
             }
+
+            if tariffa_val is not None:
+                defaults["tariffa"] = tariffa_val
             #print(f"Nome Utente: {row.get('C - Anziano autosufficiente')}")
             #print(f"Tariffa per dopo defoult {nome}: {tariffa_val}")
             #IL print qui sotto serve per debug delle tipologie non mappate delle APL
@@ -174,7 +176,7 @@ def salva_dati(request):
             ore = row.get("oretotmese")
             
             distretto_value=""            
-            if row.get("distretto") in (7,6):
+            if row.get("distretto") in (6,7):
                 distretto_value = "Nord Est"
                 defaults["distretto_nord_est"] = ore
             elif row.get("distretto") in (4,5):
@@ -207,7 +209,7 @@ def salva_dati(request):
                         distretto_value = "Nord"
                         defaults["distretto_nord"] = ore              
                     else:
-                        distretto_value = "Non Specificato"
+                        distretto_value = "Non Specificato23"
                         defaults["distretto"] = ore
 
                 if distretto_value:
