@@ -1,0 +1,186 @@
+@import url('https://fonts.cdnfonts.com/css/poppins');
+body {
+  font-family: 'Poppins', sans-serif;
+}
+.logo {
+  font-size: 1.8rem;
+}
+/*CSS per NavBar e bottoni iniziali*/
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+    .p-0 {
+        font-family: 'poppins', sans-serif;
+        background-color: #eafbe7; /* verde pastello */
+    }
+
+    .app-header {
+        background: linear-gradient(90deg, #00c853, #b2ff59); /* smeraldo a lime chiaro */
+    }
+
+    .nav-btn {
+        background-color: #00c853 !important; /* smeraldo */
+        color: #fff !important;
+    }
+
+    .nav-btn:hover {
+        background-color: #b2ff59 !important; /* lime chiaro */
+        color: #00c853 !important;
+    }
+    .nav-btn.active {
+    background-color: #b2ff59 !important; /* lime chiaro per attivo */
+    color: #00c853 !important;
+    font-weight: bold;
+}
+
+#resetbtn{
+  background-color: #c40000 !important; /* smeraldo */
+        color: #fff !important;
+}
+#resetbtn:hover{
+  background-color: #ffe5e5 !important; /* smeraldo */
+        color: #c40000 !important;
+}
+
+/*ANIMAZIONE TRA PAGINE*/
+.page {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* Wrapper principale dati */
+#dati > .d-flex {
+  height: 100vh;            /* tutta l’altezza della finestra */
+  overflow: hidden;          /* evita scroll fuori dalla finestra */
+}
+
+/* Sidebar fissa */
+aside {
+  width: 280px;
+  height: 100%;
+  overflow-y: auto;          /* scroll se tanti filtri */
+  flex-shrink: 0;
+  padding: 1rem;
+}
+
+/* Main verticale */
+main.flex-column {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;             /* occupa spazio rimanente accanto alla sidebar */
+  padding: 1rem;
+  overflow: hidden;         /* gestisce scroll internamente */
+}
+
+/* Tabella scrollabile */
+.table-wrapper {
+  flex-grow: 1;             /* occupa tutto lo spazio verticale disponibile */
+  overflow-y: auto;         /* scroll verticale per la tabella */
+  max-height: calc(100% - 300px); /* lascia spazio per top bar + bottone */
+}
+
+.table {
+  border-collapse: separate; /* necessario per sticky */
+  border-spacing: 0;
+  min-width: 1200px;        /* sufficiente per scroll orizzontale */
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Sticky header */
+.table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #212529;
+  color: #fff;
+  z-index: 2;
+}
+
+/* Prima colonna sticky */
+.table th:first-child,
+.table td:first-child {
+  position: sticky;
+  left: 0;
+  background-color: #fff;
+  z-index: 1;
+}
+
+/* Header prima colonna */
+.table thead th:first-child {
+  z-index: 3;
+  background-color: #212529;
+  color: white;
+}
+
+/* Ultima colonna sticky */
+.table th:last-child,
+.table td:last-child {
+  position: sticky;
+  right: 0;
+  background-color: #fff;
+  z-index: 1;
+}
+
+/* Header ultima colonna */
+.table thead th:last-child {
+  z-index: 3;
+  background-color: #212529;
+  color: white;
+}
+/*@media (max-width: 768px) {
+  .table-responsive {
+    max-height: 50vh; /* meno spazio su mobile
+  }
+  }*/
+
+  
+/*SEZIONE FATTURE*/
+
+.fattura-options {
+  display: flex;
+  gap: 10px;
+}
+
+.fattura-options button {
+  padding: 10px;
+  cursor: pointer;
+}
+
+#fattura-description {
+  margin-top: 20px;
+}
+
+#fattura-description p {
+  color: #ff0000;
+}
+
+.btn-info {
+  background-color: #0056b3; /* Blu */
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #00b7ff;
+  color: rgb(255, 255, 255);
+}
+.btn-info.clicked {
+  background-color: #00c010; /* Blu scuro */
+  color: white;
+}
+/*--- FINE ---*/
