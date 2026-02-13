@@ -287,16 +287,17 @@ async function processData(data, source) {
         oretotmese: row["BUONO SERVIZIO"] || 0,
         buonoservizio: row["Note Cliente"] || row["NOTE CLIENTE"] || row["note cliente"] || row["Note cliente"] || "",
         lavoratore: "",
+        periodo_documento: "Non Disponibile"
       }));
       aggiornaMeseDaHeader(ossData);
       console.log("Headers dati inviati ==>", Object.keys(ossData[0]));
       //console.log("✅ Dati OSS processati:", ossData);
       console.log("Formato dati Inviati ==>", ossData);
 
-      if (!doubleCodiceFiscaleCheck(ossData)) {
+      if (!doubleCodiceFiscaleCheck(ossData,source)) {
         return; // ⛔ BLOCCA TUTTO
       }
-
+      
       const res = await fetch("/salva/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1188,6 +1189,12 @@ async function exportExcel() {
     case 'Tutte le categorie':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
+    case 'Contratti Privati':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break;
+    case 'Progetto SOD':
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
+      break;
     case 'Tutte_Categorie_viatesso':
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Apl", "Totale", "Totale fogli firma", "Residuo ore" ];
       break;
@@ -1197,13 +1204,14 @@ async function exportExcel() {
   }
 
   const interventoCostoMensileIndex = headers.indexOf("Intervento_CostoMensile") + 1;
+  const totaleIndex = headers.indexOf("Totale") + 1;
 
   // Aggiungi la riga per il mese (e il distretto) per entrambi i fogli
   const rowMeseNord = nordWorksheet.addRow([`Cooperativa Animazione Valdocco - Domiciliarità Torino`]);
   nordWorksheet.mergeCells(1, 1, 1, headers.length); // Unisci le celle per il mese
   rowMeseNord.height = 30;
   rowMeseNord.eachCell((cell) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "48C765" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FAE6D7" } };
     cell.font = { bold: true, color: { argb: "000000" }, size: 20 };
     cell.alignment = { horizontal: "center", vertical: "middle" };
   });
@@ -1211,7 +1219,7 @@ async function exportExcel() {
   nordWorksheet.addRow(headers);
   const headerRowNord = nordWorksheet.getRow(2);
   headerRowNord.eachCell((cell, colNumber) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "48C765" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FAE6D7" } };
     cell.font = { bold: true, color: { argb: "000000" } };
     
     // Centra solo le colonne dalla seconda in poi (indice 2)
@@ -1220,11 +1228,11 @@ async function exportExcel() {
     }
   });
 
-  const rowMeseSud = sudWorksheet.addRow([`Mese: ${meseCompleto}`]);
+  const rowMeseSud = sudWorksheet.addRow([`Cooperativa Animazione Valdocco - Domiciliarità Torino`]);
   sudWorksheet.mergeCells(1, 1, 1, headers.length); // Unisci le celle per il mese
   rowMeseSud.height = 30;
   rowMeseSud.eachCell((cell) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "48C765" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FAE6D7" } };
     cell.font = { bold: true, color: { argb: "000000" }, size: 20 };
     cell.alignment = { horizontal: "center", vertical: "middle" };
   });
@@ -1232,7 +1240,7 @@ async function exportExcel() {
   sudWorksheet.addRow(headers);
   const headerRowSud = sudWorksheet.getRow(2);
   headerRowSud.eachCell((cell, colNumber) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "48C765" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FAE6D7" } };
     cell.font = { bold: true, color: { argb: "000000" } };
     
     // Centra solo le colonne dalla seconda in poi (indice 2)
@@ -1393,9 +1401,14 @@ async function exportExcel() {
           case 'emergenza_caldo':
             dataRow = [row.descrizione, row.dataNascita, "Test 1", "Test 2", print_distretto];
             break;
+          case 'Progetto SOD':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;
+          case 'Contratti Privati':
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
+            break;
           case 'Tutte le categorie':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
-            console.log("CiaoTutti");
             break;
           case 'Tutte_Categorie_viatesso':
             oreResidue = row.buonoservizio - row.totaleFormattato;
@@ -1412,8 +1425,14 @@ async function exportExcel() {
         const colBuono = 8;            // buonoservizio → numero
         const colTariffa = 9;          // tariffa → €
         const colOreTotali = 10;       // totaleFormattato → numero
-        const colTotaleFatturato = 12; // totaleFatturato → €
-        const coloreCellaResiduo = 14; 
+        let colTotaleFatturato = 0;  // totaleFatturato → €
+        let coloreCellaResiduo = 0;
+        if(tipoFattura === "Tutte_Categorie_viatesso"){
+          colTotaleFatturato = 12;
+          coloreCellaResiduo = 14; 
+        }else{
+          colTotaleFatturato = 11;
+        }
 
         // Funzione helper per pulire e convertire i valori
         function setNumericValue(cell, format) {
@@ -1421,6 +1440,7 @@ async function exportExcel() {
           cell.value = val;
           cell.numFmt = format;
         }
+        
         function setResiduoColor(cell) {
           const val = Number(cell.value) || 0;
 
@@ -1449,7 +1469,10 @@ async function exportExcel() {
         setNumericValue(row.getCell(colOreTotali), '0.00');
         setNumericValue(row.getCell(colTotaleFatturato), '€ #,##0.00');
 
-        if (nordWorksheet.rowCount % 2 === 0) {
+        //////
+        //Funzione set setResiduoColor(cell), serviva per alternare il colore nelle righe
+        //////
+        /*if (nordWorksheet.rowCount % 2 === 0) {
                 // Se il numero della riga è pari, la riga sarà verde
                 row.eachCell((cell) => {
                   cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "B0FFB6" } }; // Verde
@@ -1459,7 +1482,7 @@ async function exportExcel() {
                 row.eachCell((cell) => {
                   cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFF" } }; // Bianco
                 });
-              }
+              }*/
 
       //console.log("📈 Riga aggiunta a Nord:", row.values); // Controlla i valori della riga aggiunta
       row.eachCell((cell, colNumber) => {
@@ -1467,6 +1490,12 @@ async function exportExcel() {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
            if (colNumber === interventoCostoMensileIndex) {
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "C6EFCE" },
+              };
+            } else if (colNumber === totaleIndex) {
               cell.fill = {
                 type: "pattern",
                 pattern: "solid",
@@ -1490,15 +1519,43 @@ async function exportExcel() {
                 right: { style: 'thin', color: { argb: '000000' } }
               };
       });
-      setResiduoColor(row.getCell(coloreCellaResiduo));
+      if(tipoFattura === "Tutte_Categorie_viatesso"){setResiduoColor(row.getCell(coloreCellaResiduo));}
     } else if (isSud) {
       const row = sudWorksheet.addRow(dataRow);
         // Imposta formati numerici e valuta per le colonne corrette
         const colBuono = 8;            // buonoservizio → numero
         const colTariffa = 9;          // tariffa → €
         const colOreTotali = 10;       // totaleFormattato → numero
-        const colTotaleFatturato = 11; // totaleFatturato → €
+        let colTotaleFatturato = 0;  // totaleFatturato → €
+        let coloreCellaResiduo = 0;
+        if(tipoFattura === "Tutte_Categorie_viatesso"){
+          colTotaleFatturato = 12;
+          coloreCellaResiduo = 14; 
+        }else{
+          colTotaleFatturato = 11;
+        }
 
+        function setResiduoColor(cell) {
+          const val = Number(cell.value) || 0;
+
+          if (val < 0) {
+            // Rosso se negativo
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFF4D4D' } // rosso chiaro
+            };
+            cell.font = { color: { argb: 'FF7A0000' } };
+          } else {
+            // Verde se positivo o zero
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FF4CAF50' } // verde chiaro
+            };
+            cell.font = { color: { argb: 'FF0B3D0B' } };
+          }
+        }
         // Funzione helper per pulire e convertire i valori
         function setNumericValue(cell, format) {
           const val = parseFloat(String(cell.value).replace(/[^\d.-]/g, '')) || 0;
@@ -1511,7 +1568,10 @@ async function exportExcel() {
         setNumericValue(row.getCell(colTariffa), '€ #,##0.00');
         setNumericValue(row.getCell(colOreTotali), '0.00');
         setNumericValue(row.getCell(colTotaleFatturato), '€ #,##0.00');
-       if (sudWorksheet.rowCount % 2 === 0) {
+        //////
+        //Funzione set setResiduoColor(cell), serviva per alternare il colore nelle righe
+        //////
+        /*if (sudWorksheet.rowCount % 2 === 0) {
                 // Se il numero della riga è pari, la riga sarà verde
                 row.eachCell((cell) => {
                   cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "B0FFB6" } }; // Verde
@@ -1521,13 +1581,19 @@ async function exportExcel() {
                 row.eachCell((cell) => {
                   cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFF" } }; // Bianco
                 });
-              }
+              }*/
       //console.log("📈 Riga aggiunta a Sud:", row.values); // Controlla i valori della riga aggiunta
       row.eachCell((cell, colNumber) => {
         if (colNumber > 1) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
             if (colNumber === interventoCostoMensileIndex) {
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "C6EFCE" },
+              };
+            }else if (colNumber === totaleIndex) {
               cell.fill = {
                 type: "pattern",
                 pattern: "solid",
@@ -1544,6 +1610,7 @@ async function exportExcel() {
                   right: { style: 'thin', color: { argb: '000000' } }
                 };
       });
+      if(tipoFattura === "Tutte_Categorie_viatesso"){setResiduoColor(row.getCell(coloreCellaResiduo));}
     }
     } else {
       console.warn("⚠️ Il bottone premuto non corrisponde al tipo di utenza della riga");
@@ -1843,7 +1910,13 @@ function setFattura(tipo, button) {
       break;*/     
     case 'emergenza_caldo':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
-      break; 
+      break;
+    case 'Contratti Privati':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;
+    case 'Progetto SOD':
+      description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
+      break;  
     case 'Tutte le categorie':
       description = '<strong>Questa fattura includerà:</strong><br> Una pagina per il DISTRETTO NORD e una Pagina per il DISTRETTO SUD.';
       break; 
@@ -1935,7 +2008,7 @@ function doubleCodiceFiscaleCheck(data, source) {
 }
 
   // ✅ 2) UMANA / GIGROUP: nessun controllo
-  if (source === "umana" || source === "gigroup") {
+  if (source === "umana" || source === "gigroup" || source === "oss") {
     return true;
   }
 

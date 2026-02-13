@@ -1,3 +1,4 @@
+import hashlib
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -100,7 +101,7 @@ def salva_dati(request):
                             return 0
                 return 0
             codice_fiscale = (row.get("Codice Fiscale Cliente") or "").strip()
-            utente = Utente.objects.all()
+            #utente = Utente.objects.all()
 
             
             #print(list(Utente.objects.all().values()))
@@ -134,7 +135,7 @@ def salva_dati(request):
                 "ufficio": parse_float("Ufficio", "C - Ufficio", "0.00"),
                 "via_tesso": parse_float("C - UFFICIO VIA TESSO", "0.00"),
                 "totale_ore": parse_float("Totale", "TOTALE","Totale", "0.00"),
-                "totale_foglifirma": parse_float("TOTALE FOGLI FIRMA", "0.00"),
+                "totale_foglifirma": parse_float("TOTALE FOGLI FIRMA","Totale folgi firme", "0.00"),
                 "data_riferimento": data_riferimento,
                 "oretotmese": row.get("oretotmese", 0),
                 "descrizionetipologia": row.get("descrizionetipologia",0),
@@ -168,19 +169,20 @@ def salva_dati(request):
             else:
                 defaults["codice_fiscale"] = "CF Mancante"
 
-            #calcolo del periodo del documento
+            # calcolo del periodo del documento
             periodo_documento = calcola_periodo_documento(row.get("periodo_documento"))
             defaults["periodo_documento"] = periodo_documento
-            #print(f"periodo_documento", periodo_documento)
-            # gestione distretto come prima → AGGIORNO SOLO SE DISTRETTO VALORIZZATO
 
+            # -------------------------
+            # distretto (non deve bloccare il salvataggio)
+            # -------------------------
             ore = row.get("oretotmese")
-            
-            distretto_value=""            
-            if row.get("distretto") in (6,7):
+            distretto_value = ""
+
+            if row.get("distretto") in (6, 7):
                 distretto_value = "Nord Est"
                 defaults["distretto_nord_est"] = ore
-            elif row.get("distretto") in (4,5):
+            elif row.get("distretto") in (4, 5):
                 distretto_value = "Nord Ovest"
                 defaults["nord_ovest"] = ore
             elif row.get("distretto") == 2:
@@ -189,7 +191,6 @@ def salva_dati(request):
             else:
                 distretto = (row.get("distretto") or "").strip()
                 if distretto and ore not in (None, "", 0):
-                    distretto_value = None
                     d = distretto.lower()
                     if "nord ovest" in d:
                         distretto_value = "Nord Ovest"
@@ -202,52 +203,93 @@ def salva_dati(request):
                         defaults["sud_est"] = ore
                     elif "sud" in d:
                         distretto_value = "Sud"
-                        defaults["distretto_sud"] = ore               
+                        defaults["distretto_sud"] = ore
                     elif "nord est" in d:
                         distretto_value = "Nord Est"
-                        defaults["distretto_nord_est"] = ore                    
+                        defaults["distretto_nord_est"] = ore
                     elif "nord" in d:
                         distretto_value = "Nord"
-                        defaults["distretto_nord"] = ore              
+                        defaults["distretto_nord"] = ore
                     else:
-                        distretto_value = "Non Specificato23"
-                        defaults["distretto"] = ore
+                        distretto_value = "Non Specificato"
 
-                if distretto_value:
-                    defaults["distretto"] = distretto_value       
-                    
+            if distretto_value:
+                defaults["distretto"] = distretto_value
 
+            # -------------------------
+            # PULIZIA DEFAULTS (una sola volta)
+            # -------------------------
             clean_defaults = {k: v for k, v in defaults.items() if v not in (None, "")}
-             #In Django non perdo i dati per via del filtro if v not in (None, "") prima di fare l’update.
-            # Rimuovo le chiavi già passate esplicitamente
             clean_defaults.pop("tipologia", None)
             clean_defaults.pop("apl", None)
-            #nel caso oretotmese sia vuoto quindi con "", si restituisce 0
-            raw_ore = row.get("buonoservizio")
 
-            def parse_ore(value):
-                if value in (None, ""):
-                    return 0.0
-                if isinstance(value, (int, float)):
-                    return float(value)
-                match = re.search(r'\d+(?:[.,]\d+)?', str(value))
-                return float(match.group().replace(",", ".")) if match else 0.0
-            buonoservizio = parse_ore(raw_ore) 
-            #print(f"ORE TOT MESE >>> {row.get("oretotmese")}")
+            # -------------------------
+            # HASH (dedup righe IDENTICHE OSS)
+            # -------------------------
+            def norm(v):
+                return str(v or "").strip().upper().replace("\n", " ").replace("\r", " ")
+
+            def norm_num(v):
+                if v in (None, ""):
+                    return "0"
+                s = str(v).strip().replace(",", ".")
+                try:
+                    return str(float(s))
+                except:
+                    return norm(s)
+
+            signature = "|".join([
+                f"TIP={norm(tipologia)}",
+                f"APL={norm(apl)}",
+                f"CF={norm(codice_fiscale)}",
+                f"NOME={norm(nome)}",
+                f"ORETOTMESE={norm_num(row.get('oretotmese'))}",
+                f"BUONOSERVIZIO={norm_num(buonoservizio)}",
+                f"PNRR={norm_num(row.get('C - PNRR'))}",
+                f"ADI={norm_num(row.get('C - ADI'))}",
+                f"ANZ_AUTO={norm_num(row.get('C - Anziano autosufficiente'))}",
+                f"ANZ_NON_AUTO={norm_num(row.get('C - Anziano non autosufficiente'))}",
+                f"PRIVATI={norm_num(row.get('C - Contratti privati'))}",
+                f"DISABILE={norm_num(row.get('C - Disabile'))}",
+                f"MINORI={norm_num(row.get('C - Minori Disabili Gravi'))}",
+                f"EMERG_COMUNE={norm_num(row.get('C - EMERGENZA CALDO COMUNE'))}",
+            ])
+
+            row_hash = hashlib.sha256(signature.encode("utf-8")).hexdigest()
+
+            # -------------------------
+            # LOOKUP (chiave) + SALVATAGGIO
+            # -------------------------
+            if tipologia == "OSS":
+                # ✅ salva TUTTE le righe diverse (anche stesso CF), dedup SOLO identiche
+                lookup = {
+                    "tipologia": tipologia,
+                    "row_hash": row_hash,
+                }
+            else:
+                # 🔁 comportamento normale
+                lookup = {
+                    "codice_fiscale": codice_fiscale if codice_fiscale not in (None, "") else "CF Mancante",
+                    "oretotmese": row.get("oretotmese", 0.0),
+                    "lavoratore": row.get("lavoratore", ""),
+                }
+
             utente, created = Utente.objects.update_or_create(
-                codice_fiscale = codice_fiscale if codice_fiscale not in (None, "") else "CF Mancante",
-                oretotmese= row.get("oretotmese", 0.0),
-                lavoratore= row.get("lavoratore", ""),
+                **lookup,
                 defaults={
                     "nome": nome.strip(),
+                    "codice_fiscale": codice_fiscale if codice_fiscale not in (None, "") else "CF Mancante",
                     "tipologia": tipologia,
                     "apl": apl,
-                    "oretotmese": row.get("oretotmese",0.0),
+                    "oretotmese": row.get("oretotmese", 0.0),
                     "lavoratore": row.get("lavoratore", ""),
+                    "buonoservizio": buonoservizio,
+                    "row_hash": row_hash,
                     **clean_defaults
                 }
-            ) 
-            logger.info(f"🧾 Utente salvato: {utente.nome}, creato={created}")       
+            )
+
+            logger.info(f"🧾 Utente salvato: {utente.nome}, creato={created}, hash={row_hash[:8]}")       
         return JsonResponse({"status": "ok"})
     except Exception as e:
             logger.exception("Errore durante il salvataggio")

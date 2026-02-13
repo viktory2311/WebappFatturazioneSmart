@@ -43,6 +43,10 @@ class Utente(models.Model):
 
     data_riferimento = models.DateField(null=True, blank=True)
 
+    row_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    categoria = models.CharField(max_length=50, blank=True, db_index=True)
+
+
     def __str__(self):
         return self.nome
 
