@@ -493,7 +493,7 @@ async function processData(data, source) {
       allData = [...allData, ...dataWithSource];
 
       const minimalData = dataWithSource.map(row => ({
-        descrizione: [row["NOME BENEFICIARIO"], row["COGNOME BENEFICIARIO"]].filter(Boolean).join(" ") || "Nome non disponibile",        
+        descrizione: [row["COGNOME BENEFICIARIO"], row["NOME BENEFICIARIO"]].filter(Boolean).join(" ") || "Nome non disponibile",        
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
@@ -1634,6 +1634,7 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     "DISABILE": "disabili",
     "Disabili": "disabili",
     "Anziani Auto": "anziani_autosufficienti",
+    "Anziani auto": "anziani_autosufficienti",
     "Anziani non Auto": "anziani_non_autosufficienti",
     "Minori Disabili Gravi": "minori_disabili_gravi",
     "ANZ_NON_AUTO": "anziani_non_autosufficienti",
