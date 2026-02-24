@@ -406,7 +406,7 @@ async function processData(data, source) {
         lavoratore: "",
       }));
       if (!doubleCodiceFiscaleCheck(dataWithSource, source)) {
-        return; // ⛔ BLOCCA TUTTO
+        return; 
       }
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData);
@@ -1196,7 +1196,7 @@ async function exportExcel() {
       headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Totale", "Apl"];
       break;
     case 'Tutte_Categorie_viatesso':
-      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Apl", "Totale", "Totale fogli firma", "Residuo ore" ];
+      headers = ["Descrizione", "Data di Nascita", "Codice Fiscale Cliente", "Distretto", "Buono_TipoUtenza", "Mese", "Tipo_Intervento", "Intervento_OreMensili", "Intervento_CostoMensile", "Quantità erogata", "Apl", "Totale", "Residuo ore" ];
       break;
     default:
       headers = ["Descrizione", "Data di Nascita", "Indirizzo", "Codice Fiscale", "Distretto"];
@@ -1412,7 +1412,7 @@ async function exportExcel() {
             break;
           case 'Tutte_Categorie_viatesso':
             oreResidue = row.buonoservizio - row.totaleFormattato;
-            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, row.apl, totaleFatturato, row.Totale_foglifirma, oreResidue ];
+            dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, row.apl, totaleFatturato, oreResidue ];
             break;
           default:
             dataRow = [row.descrizione, row.dataNascita, row.indirizzo, row.codiceFiscale, print_distretto];
@@ -1429,7 +1429,7 @@ async function exportExcel() {
         let coloreCellaResiduo = 0;
         if(tipoFattura === "Tutte_Categorie_viatesso"){
           colTotaleFatturato = 12;
-          coloreCellaResiduo = 14; 
+          coloreCellaResiduo = 13; 
         }else{
           colTotaleFatturato = 11;
         }
@@ -1530,7 +1530,7 @@ async function exportExcel() {
         let coloreCellaResiduo = 0;
         if(tipoFattura === "Tutte_Categorie_viatesso"){
           colTotaleFatturato = 12;
-          coloreCellaResiduo = 14; 
+          coloreCellaResiduo = 13; 
         }else{
           colTotaleFatturato = 11;
         }
