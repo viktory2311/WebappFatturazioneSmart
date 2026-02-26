@@ -9,6 +9,66 @@ from .models import Tariffa
 from datetime import datetime, timedelta
 from django.shortcuts import render
 import re
+import unicodedata
+
+def _clean(s: str) -> str:
+    s = (s or "").strip()
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    s = s.lower()
+    s = re.sub(r"[_\-]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+def normalizza_descrizionetipologia(raw: str) -> str:
+    c = _clean(raw)
+
+    # ---- ANZIANI AUTO ----
+    if c in {
+        "anziani auto", "anziano auto",
+        "anziani autosufficienti", "anziano autosufficiente",
+        "anz autosufficienti", "anz auto", "anz. auto",
+        "anz autosuff", "autosufficienti", "auto","ANZ_AUTO"
+    } or ("anzian" in c and "auto" in c):
+        return "anziani_autosufficienti"
+
+    # ---- ANZIANI NON AUTO ----
+    if c in {"anziani non autosufficienti", "anziano non autosufficiente", "anziani non auto", "anziano non auto", "anz non auto","ANZ_NON_AUTO"} or ("anzian" in c and "non" in c and "auto" in c):
+        return "anziani_non_autosufficienti"
+    # ---- DISABILI ----
+    if c in {"disabile","disabili"}:
+        return "disabili"
+    # ---- MINORI NON DISABILI BS U6 ----
+    if c in {
+        "minori non disabili bs u6",
+        "minore non disabile bs u6",
+        "minori non disabili baby sitter u6"
+    }:
+        return "minori_non_disabili_bs_u6"
+    # ---- MINORI NON DISABILI BS ----
+    if c in {
+        "minori non disabili bs",
+        "minore non disabile bs",
+        "minori non disabili baby sitter",
+        "minori non disabili babysitter"
+    }:
+        return "minori_non_disabili_bs"
+    # ---- MINORI NON DISABILI ISTRUTTORE ----
+    if c in {
+        "minori non disabili is",
+        "minori non disabili istruttore"
+    }:
+        return "minori_non_disabili_is"
+    # ---- MINORI NON DISABILI ----
+    if c in {
+        "minori non disabili",
+        "minore non disabile",
+        "minori non disabile"
+    }:
+        return "minori_non_disabili"
+    # ---- MINORI DISABILI GRAVI ----
+    if c in {"minori disabili gravi"} or ("min" in c and "dis" in c and "grav" in c):
+        return "minori_disabili_gravi"
+    return c  # fallback
 
 # Configura logger
 logger = logging.getLogger(__name__)
@@ -56,12 +116,6 @@ def salva_dati(request):
             if not nome:
                 logger.warning(f"Riga saltata (nessun nome identificativo): {row}")
                 continue  # salta righe senza identificativo
-            #tariffa_val = get_tariffa(row.get("apl") or row.get("tipologia"))
-            tariffa_val = get_tariffa(
-                prestazione=row.get("tipologia") or row.get("apl"),
-                descrizionetipologia=row.get("descrizionetipologia"),
-                apl=row.get("apl")
-            )
             # Data di riferimento se presente
             intestazione = next(
                 (k for k in row.keys() if re.match(r'(\d{2})\s([a-z]{3})\s(\d{4})', k, re.IGNORECASE)),
@@ -77,6 +131,9 @@ def salva_dati(request):
             tipologia = row.get("tipologia") or row.get("TIPOLOGIA") or ""
             apl = row.get("apl") or ""
 
+            descr_raw = row.get("descrizionetipologia") or row.get("Descrizione Tipologia") or ""
+            descr_canon = normalizza_descrizionetipologia(descr_raw)
+
             #ore tot mese
             raw_ore= row.get("buonoservizio", 0)
             def parse_ore(value):
@@ -88,6 +145,12 @@ def salva_dati(request):
                 return float(match.group().replace(",", ".")) if match else 0.0
             buonoservizio = parse_ore(raw_ore) 
 
+            #tariffa_val = get_tariffa(row.get("apl") or row.get("tipologia"))
+            tariffa_val = get_tariffa(
+                prestazione=row.get("tipologia") or row.get("apl"),
+                descrizionetipologia= descr_canon,
+                apl=row.get("apl")
+            )
             
             # Funzione helper per campi numerici
             def parse_float(*keys):
@@ -138,7 +201,7 @@ def salva_dati(request):
                 "totale_foglifirma": parse_float("TOTALE FOGLI FIRMA","Totale folgi firme", "0.00"),
                 "data_riferimento": data_riferimento,
                 "oretotmese": row.get("oretotmese", 0),
-                "descrizionetipologia": row.get("descrizionetipologia",0),
+                "descrizionetipologia": descr_canon,
                 "lavoratore": row.get("lavoratore",0),
                 "periodo_documento": row.get("periodo_documento",0),
             }
@@ -176,20 +239,25 @@ def salva_dati(request):
             # -------------------------
             # distretto (non deve bloccare il salvataggio)
             # -------------------------
+            distretto = (row.get("distretto") or "").strip()
             ore = row.get("oretotmese")
             distretto_value = ""
-
-            if row.get("distretto") in (6, 7):
+            
+            try:
+                distretto = int(distretto)
+            except(ValueError,TypeError):
+                distretto = None
+            
+            if distretto in (6, 7):
                 distretto_value = "Nord Est"
                 defaults["distretto_nord_est"] = ore
-            elif row.get("distretto") in (4, 5):
+            elif distretto in (4, 5):
                 distretto_value = "Nord Ovest"
                 defaults["nord_ovest"] = ore
-            elif row.get("distretto") == 2:
+            elif distretto == 2:
                 distretto_value = "Sud Ovest"
                 defaults["sud_ovest"] = ore
             else:
-                distretto = (row.get("distretto") or "").strip()
                 if distretto and ore not in (None, "", 0):
                     d = distretto.lower()
                     if "nord ovest" in d:
@@ -306,7 +374,8 @@ def salva_tariffe(request):
         for item in dati:
             prestazione = item.get("prestazione", "")
             apl = item.get("apl", "").strip()
-            descrizione = str(item.get("descrizionetipologia") or "").strip()
+            descrizione_raw = str(item.get("descrizionetipologia") or "").strip()
+            descrizione = normalizza_descrizionetipologia(descrizione_raw)            
             valore = item.get("valore")
 
             if valore in (None, ""):
@@ -359,6 +428,7 @@ def get_tariffa(prestazione, descrizionetipologia=None, apl=None):
     Restituisce il valore della tariffa per tipologia, descrizionetipologia e opzionalmente APL.
     """
     qs = Tariffa.objects.filter(tipologia=prestazione)
+    descrizionetipologia = normalizza_descrizionetipologia( descrizionetipologia) 
 
     if descrizionetipologia:
         qs = qs.filter(descrizionetipologia__iexact=str(descrizionetipologia).strip())

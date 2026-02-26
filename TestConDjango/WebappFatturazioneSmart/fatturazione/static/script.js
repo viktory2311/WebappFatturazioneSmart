@@ -571,7 +571,7 @@ async function processData(data, source) {
         righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
         originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
       }
-      console.log("🧪 Primo record dopo mapping:", originalData[0]);
+      console.log("🧪 records dopo mapping:", originalData);
       populateTable(originalData);
       populateUtenteFilter();
 
@@ -602,7 +602,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || "Non specificato",
+        distretto: row["CIRCOSCRIZIONE"] || row["circoscrizione"] || row["Circoscrizione"] || row["Codice circoscrizione"] || "Non specificato",
         oretotmese: row["Ore_Inbuono"] || 0,
         buonoservizio: row["Ore_Lav_Mese"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
@@ -672,7 +672,7 @@ async function processData(data, source) {
         righeDaOrdinare.sort((a, b) => (a.Descrizione||"").trim().localeCompare((b.Descrizione||"").trim(), "it", {sensitivity: "base"}));
         originalData = [...righeDaOrdinare, originalData[originalData.length - 1]];
       }
-      console.log("🧪 Primo record dopo mapping:", originalData[0]);
+      console.log("🧪 records dopo mapping:", originalData);
       populateTable(originalData);
       populateUtenteFilter();
 
@@ -685,7 +685,6 @@ async function processData(data, source) {
     console.error("❌ Errore nel caricamento/salvataggio:", err);
   }
 }
-
 //Funzione per gestire APL Source
 function deriveAPL(source) {
   const s = source.toLowerCase();
@@ -1323,24 +1322,16 @@ async function exportExcel() {
       tipoUtenza = "Progetto SOD";
     }else{
       let mappaTipologia = {
-    "ANZIANI AUTOSUFFICIENTI": "anziani_autosufficienti",
-    "ANZIANI NON AUTOSUFFICIENTI": "anziani_non_autosufficienti",
-    "MINORI DISABILI GRAVI": "minori_disabili_gravi",
-    "DISABILI": "disabili",
-    "DISABILE": "disabili",
-    "Disabili": "disabili",
-    "Anziani Auto": "anziani_autosufficienti",
-    "Anziani non Auto": "anziani_non_autosufficienti",
-    "Minori Disabili Gravi": "minori_disabili_gravi",
-    "ANZ_NON_AUTO": "anziani_non_autosufficienti",
-    "DISABILE": "disabili",
-    "ANZ_AUTO": "anziani_autosufficienti",
-    "MINORI": "minori",
+    "anziani_autosufficienti": "anziani_autosufficienti",
+    "anziani_non_autosufficienti": "anziani_non_autosufficienti",
+    "minori_disabili_gravi": "minori_disabili_gravi",
+    "minori": "minori",
+    "minori_non_disabili_bs":"minori",
+    "minori_non_disabili_bs_u6":"minori",
+    "minori_non_disabili_is":"minori",
+    "minori_non_disabili":"minori",
+    "disabili": "disabili",
     "EMERGENZA CALDO": "emergenza_caldo",
-    "Minori non Disabili":"minori",
-    "Minori non Disabili BS":"minori",
-    "Minori non Disabili BS U6":"minori",
-    "Minori non Disabili Is":"minori",
     };
     tipoUtenza = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     //console.log("🙌Valore Apl  ==> ", row.apl, "🙌Valore tipoUtenza  ==> ", tipoUtenza   );
@@ -1627,25 +1618,12 @@ function calcolaRiepilogoPerSheet(visualizedData, tipoFattura, ws, isNord) {
     const isRigaNord = row.nordOvest > 0 || row.distrettoNord > 0 || row.distrettoNordEst > 0;
     const isRigaSud = row.sudOvest > 0 || row.distrettoSud > 0 || row.sudEst > 0;
     const mappaTipologia = {
-    "ANZIANI AUTOSUFFICIENTI": "anziani_autosufficienti",
-    "ANZIANI NON AUTOSUFFICIENTI": "anziani_non_autosufficienti",
-    "MINORI DISABILI GRAVI": "minori_disabili_gravi",
-    "DISABILI": "disabili",
-    "DISABILE": "disabili",
-    "Disabili": "disabili",
-    "Anziani Auto": "anziani_autosufficienti",
-    "Anziani auto": "anziani_autosufficienti",
-    "Anziani non Auto": "anziani_non_autosufficienti",
-    "Minori Disabili Gravi": "minori_disabili_gravi",
-    "ANZ_NON_AUTO": "anziani_non_autosufficienti",
-    "DISABILE": "disabili",
-    "ANZ_AUTO": "anziani_autosufficienti",
-    "MINORI": "minori",
+    "anziani_autosufficienti": "anziani_autosufficienti",
+    "anziani_non_autosufficienti": "anziani_non_autosufficienti",
+    "minori_disabili_gravi": "minori_disabili_gravi",
+    "minori": "minori",
+    "disabili": "disabili",
     "EMERGENZA CALDO": "emergenza_caldo",
-    "Minori non Disabili":"minori",
-    "Minori non Disabili BS":"minori",
-    "Minori non Disabili BS U6":"minori",
-    "Minori non Disabili Is":"minori",
     };
     rowTipo = mappaTipologia[row.descrizionetipologia] || "tipo_utenza_non_definito";  // In caso di valore sconosciuto
     //console.log("valore rowTipo >>>>", rowTipo,"valore tipoFattura >>>>>> ", tipoFattura);
@@ -1736,6 +1714,7 @@ function caricaTariffe() {
   fetch(`/tariffe/?_=${Date.now()}`)  // cache-buster
     .then(r => r.json())
     .then(data => {
+      console.log("Dati ricevuti tariffe ->",data);
       data.forEach(t => {
         let cell = document.querySelector(`#tabella-prezzi td[data-prestazione="${t.tipologia}"][data-apl="${t.apl || ""}"][data-descrizionetipologia="${t.descrizionetipologia || ""}"]`);
         console.log("VaLORE >>>>", t.valore, " | Apl >>> ",t.apl," | Tipologia >>>",t.tipologia, " | Descrizione Tipologia >>>",t.descrizionetipologia);
