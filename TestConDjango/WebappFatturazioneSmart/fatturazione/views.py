@@ -244,21 +244,23 @@ def salva_dati(request):
             distretto_value = ""
             
             try:
-                distretto = int(distretto)
+                distretto_int = int(distretto)
             except(ValueError,TypeError):
-                distretto = None
+                distretto_int = None
             
-            if distretto in (6, 7):
+            if distretto_int in (6, 7):
                 distretto_value = "Nord Est"
                 defaults["distretto_nord_est"] = ore
-            elif distretto in (4, 5):
+            elif distretto_int in (4, 5):
                 distretto_value = "Nord Ovest"
                 defaults["nord_ovest"] = ore
-            elif distretto == 2:
+            elif distretto_int == 2:
                 distretto_value = "Sud Ovest"
                 defaults["sud_ovest"] = ore
             else:
+                #print(f"Valore distretto:{distretto} and ore:{ore}")
                 if distretto and ore not in (None, "", 0):
+                    
                     d = distretto.lower()
                     if "nord ovest" in d:
                         distretto_value = "Nord Ovest"

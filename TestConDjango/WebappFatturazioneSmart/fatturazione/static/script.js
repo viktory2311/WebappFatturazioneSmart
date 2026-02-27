@@ -102,6 +102,7 @@ window.onload = () => {
             setupDropArea('fileInput-umana', 'umana');
             setupDropArea('fileInput-synergie', 'synergie');
             setupDropArea('fileInput-gigroup', 'gigroup');
+            setupDropArea('fileInput-ore_oss', 'ore_oss');
 
 }
 function setupDropArea(fileInputId, source) {
@@ -255,12 +256,13 @@ function loadFile(source) {
           let sheet = workbook.Sheets[sheetName];
           jsonData = XLSX.utils.sheet_to_json(sheet, { range: 5 });
       console.log("Aggiunto file synergie 😂");
+      }else if(source === "ore_oss"){
+          jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
       }else{
           jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
       }
       console.log("✅ File letto:", file.name);
       console.log("📦 Dati estratti:", jsonData.slice(0, 2));
-      if(source ==="umana"){console.log("SI");}
       console.log("🔁 Passaggio a processData con source:", source);
       processData(jsonData, source);
     };
@@ -275,6 +277,7 @@ function loadFile(source) {
 let allData = [];
 let ossData = [];
 let visualizedData =[];
+let dati_ore_oss = [];
 // Funzione che processa i dati a seconda della fonte
 async function processData(data, source) {
   console.log("😁😁 Valore di Source: ",source);
@@ -399,7 +402,7 @@ async function processData(data, source) {
         buonoservizio: row["BUONO SERVIZIO"] || row["ORE BUONO SERVIZIO"] || 0,
         tariffa: row["TARIFFA"] || 0,
         "Indirizzo Cliente": row["Descrizione circoscrizione"] || "",
-        "Codice Fiscale Cliente": row["CODICE FISCALE"] || "",
+        "Codice Fiscale Cliente": row["CODICE FISCALE"] || row["CODICE FISCALE BADATO"] || row["Codice fiscale"]|| "",
         descrizionetipologia: row["Descrizione tipologia"] || "",
         "Data di Nascita Cliente": row["Data di nascita beneficiario"] || "",
         periodo_documento: row["Periodo documento"] || "Periodo non specificato",
@@ -679,12 +682,46 @@ async function processData(data, source) {
       if (confirm(`Hai caricato il file ${source}. Vuoi aprire la pagina dati ora?`)) {
         showPage('dati');
       } 
-    }
+    }else if (source === "ore_oss") {
+
+    dati_ore_oss = data.map(row => ({
+      ORE_TOTALI: row["Ore"] || ""
+    }));
+
+    console.log("✅ ore_oss processato:", dati_ore_oss.slice(0, 2));
+
+    const btn = document.getElementById("btnStampa-ore_oss");
+    if (btn) btn.disabled = dati_ore_oss.length === 0;
+
+    return; // importantissimo: evita di far proseguire logiche di altri source
+  }
 
   } catch (err) {
     console.error("❌ Errore nel caricamento/salvataggio:", err);
   }
 }
+
+function exportOreOssExcel() {
+  if (!dati_ore_oss || dati_ore_oss.length === 0) {
+    alert("Prima carica un file ore_oss");
+    return;
+  }
+
+  dati_ore_oss.forEach((row) => {
+  let valore = (row["ORE_TOTALI"] ?? "").toString();
+  valore = valore.replace(",", ".");
+  numero = parseFloat(valore.match(/\d+(\.\d+)?/)?.[0]);
+  row["ORE_TOTALI"] = numero || 0;
+  });
+  
+
+  const ws = XLSX.utils.json_to_sheet(dati_ore_oss);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ore_oss");
+
+  XLSX.writeFile(wb, "ore_oss.xlsx");
+}
+
 //Funzione per gestire APL Source
 function deriveAPL(source) {
   const s = source.toLowerCase();

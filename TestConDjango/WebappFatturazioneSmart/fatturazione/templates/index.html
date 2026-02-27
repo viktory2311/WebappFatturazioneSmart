@@ -20,6 +20,7 @@
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this,'upload')">📂 Carica Dati</button>
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'dati')">📊 Visualizza Dati</button>
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'fatture')">🧾 Sezione Fatture</button>
+    <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'ore_oss')">🕛 Conteggio ore oss</button>
   </nav>
 
   <main class="container-fluid px-5">
@@ -273,9 +274,23 @@
     <!-- Bottone per esportare Excel -->
     <button class="btn btn-warning mt-3 mb-3" onclick="exportExcel()">📊 Esporta Excel</button>
   </div>
+<!-- SEZIONE Conteggio ore oss -->
+  <div id="ore_oss" class="page">
+    <div class="mb-4">
+          <h2>Carica File per contare ore oss</h2>
+          <div class="border border-2 border-primary rounded p-5 text-center bg-light" style="cursor:pointer;">
+            <div class="text-secondary">Trascina qui il file excell oppure <span class="text-primary fw-bold">clicca per selezionare</span></div>
+            <input type="file" id="fileInput-ore_oss" class="form-control d-none">
+          </div>
+          <button class="btn btn-primary mt-2" onclick="loadFile('ore_oss')">Carica</button>
+          <button class="btn btn-success mt-2 ms-2" id="btnStampa-ore_oss" onclick="exportOreOssExcel()" disabled>
+            Stampa Excel
+          </button>
+          <p class="mt-2 text-muted">Inserisci file ore_oss</p>
+        </div>
+  </div>
 
-
-  </main>
+</main>
 <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center p-4">
