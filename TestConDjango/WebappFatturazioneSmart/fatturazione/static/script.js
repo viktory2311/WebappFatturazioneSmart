@@ -1761,6 +1761,54 @@ function caricaTariffe() {
     .catch(err => console.error("Errore caricando tariffe:", err));
 }
 
+const tariffeVecchie = {
+  "synergie": "13.00",
+  "gigroup": "13.00",
+  "umana": "13.00",
+  "OSS": "14.00",
+  "minori": "0.00",
+  "minori_disabili_gravi": "14.00",
+  "minori_non_disabili": "12.00",
+  "minori_non_disabili_bs": "12.00",
+  "minori_non_disabili_bs_u6": "12.00",
+  "minori_non_disabili_is": "12.00",
+  "anziani_autosufficienti": "12.00",
+};
+
+const tariffeNuove = {
+  "synergie": "14.00",
+  "gigroup": "14.00",
+  "umana": "14.00",
+  "OSS": "14.00",
+  "minori": "0.00",
+  "minori_disabili_gravi": "14.00",
+  "minori_non_disabili": "12.00",
+  "minori_non_disabili_bs": "12.00",
+  "minori_non_disabili_bs_u6": "12.00",
+  "minori_non_disabili_is": "12.00",
+  "anziani_autosufficienti": "12.66",
+};
+
+function setTariffa(value){
+  
+    document.querySelectorAll("#tabella-prezzi td[data-prestazione]")
+    .forEach(td => {
+      const prestazione = td.dataset.prestazione;
+      const descrizionetipologia = td.dataset.descrizionetipologia;
+      const apl = td.dataset.apl;
+      // chiave per cercare il prezzo corretto all'intero dell'oggetto (tariffeNuove o tariffeVecchie)
+      chiave = apl || descrizionetipologia || prestazione;
+
+      if (value === "tariffeNuove") {
+        td.textContent = tariffeNuove[chiave] ?? "0.00";
+      } else if (value === "tariffeVecchie") {
+        td.textContent = tariffeVecchie[chiave] ?? "0.00";
+      } else {
+        td.textContent = "0.00";
+      }
+    });
+}
+
 
 // Salva le tariffe modificate
 /*function salvaTariffe() {
@@ -1882,6 +1930,7 @@ function resetTariffe() {
   })
 }
 }
+
 // SERVER A SALVARE I DATI IN LOCALE
 function saveData() {
   localStorage.setItem("fatturazioneData", JSON.stringify(originalData));
