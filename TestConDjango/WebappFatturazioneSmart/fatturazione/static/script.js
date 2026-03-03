@@ -1762,31 +1762,35 @@ function caricaTariffe() {
 }
 
 const tariffeVecchie = {
-  "synergie": "13.00",
-  "gigroup": "13.00",
-  "umana": "13.00",
-  "OSS": "14.00",
-  "minori": "0.00",
+  "synergie": "12.66",
+  "gigroup": "12.66",
+  "umana": "12.66",
+  "OSS": "24.00",
+  "minori":"12.66",
   "minori_disabili_gravi": "14.00",
-  "minori_non_disabili": "12.00",
-  "minori_non_disabili_bs": "12.00",
-  "minori_non_disabili_bs_u6": "12.00",
-  "minori_non_disabili_is": "12.00",
-  "anziani_autosufficienti": "12.00",
+  "minori_non_disabili": "12.66",
+  "minori_non_disabili_bs": "12.66",
+  "minori_non_disabili_bs_u6": "14.00",
+  "minori_non_disabili_is": "16.00",
+  "anziani_autosufficienti": "12.66",
+  "anziani_non_autosufficienti": "14.00",
+  "disabili":"14.00"  
 };
 
 const tariffeNuove = {
-  "synergie": "14.00",
-  "gigroup": "14.00",
-  "umana": "14.00",
-  "OSS": "14.00",
-  "minori": "0.00",
-  "minori_disabili_gravi": "14.00",
-  "minori_non_disabili": "12.00",
-  "minori_non_disabili_bs": "12.00",
-  "minori_non_disabili_bs_u6": "12.00",
-  "minori_non_disabili_is": "12.00",
-  "anziani_autosufficienti": "12.66",
+  "synergie": "13.20",
+  "gigroup": "13.20",
+  "umana": "13.20",
+  "OSS": "24.00",
+  "minori":"13.20",
+  "minori_disabili_gravi": "14.60",
+  "minori_non_disabili": "13.20",
+  "minori_non_disabili_bs": "13.20",
+  "minori_non_disabili_bs_u6": "14.60",
+  "minori_non_disabili_is": "16.60",
+  "anziani_autosufficienti": "13.20",
+  "anziani_non_autosufficienti": "14.60",
+  "disabili":"14.60"
 };
 
 function setTariffa(value){

@@ -22,6 +22,10 @@ def _clean(s: str) -> str:
 def normalizza_descrizionetipologia(raw: str) -> str:
     c = _clean(raw)
 
+    # ---- ANZIANI NON AUTO ----
+    if c in {"anziani non autosufficienti", "anziano non autosufficiente", "anziani non auto", "anziano non auto", "anz non auto","ANZ_NON_AUTO"} or ("anzian" in c and "non" in c and "auto" in c):
+        return "anziani_non_autosufficienti"
+
     # ---- ANZIANI AUTO ----
     if c in {
         "anziani auto", "anziano auto",
@@ -31,9 +35,6 @@ def normalizza_descrizionetipologia(raw: str) -> str:
     } or ("anzian" in c and "auto" in c):
         return "anziani_autosufficienti"
 
-    # ---- ANZIANI NON AUTO ----
-    if c in {"anziani non autosufficienti", "anziano non autosufficiente", "anziani non auto", "anziano non auto", "anz non auto","ANZ_NON_AUTO"} or ("anzian" in c and "non" in c and "auto" in c):
-        return "anziani_non_autosufficienti"
     # ---- DISABILI ----
     if c in {"disabile","disabili"}:
         return "disabili"
