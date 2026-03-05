@@ -565,3 +565,58 @@ body {
         gap: 16px;
     }
 }
+
+/* ===== GREEN THEME OVERRIDE (incolla in fondo al CSS) ===== */
+:root{
+  --primary-green:#198754;
+  --primary-green-dark:#146c43;
+}
+
+/* Titolo */
+.login-header h2{
+  color: var(--primary-green-dark) !important;
+}
+
+/* Icona grande */
+.login-card .icon-inner{
+  color: var(--primary-green) !important;
+}
+
+/* Icone input quando focus */
+.login-card .neu-input:focus-within .input-icon{
+  color: var(--primary-green) !important;
+}
+
+/* Bordo verde quando focus */
+.login-card .neu-input:focus-within{
+  box-shadow:
+    inset 4px 4px 8px #bec3cf,
+    inset -4px -4px 8px #ffffff,
+    0 0 0 2px var(--primary-green) !important;
+}
+
+/* Checkbox check */
+.login-card .neu-checkbox svg{
+  color: var(--primary-green) !important;
+}
+
+/* Link forgot */
+.login-card .forgot-link:hover{
+  color: var(--primary-green) !important;
+}
+
+/* Bottone login verde */
+.login-card .neu-button{
+  background: var(--primary-green) !important;
+  color: #fff !important;
+}
+
+/* Hover bottone */
+.login-card .neu-button:hover{
+  background: var(--primary-green-dark) !important;
+}
+
+/* Spinner */
+.login-card .neu-spinner{
+  border-top: 3px solid var(--primary-green) !important;
+}
