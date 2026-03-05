@@ -16,12 +16,33 @@
     <h1 class="m-0 fs-3" style="cursor:pointer" onclick="setActive(this,'upload')">Fatturazione Domiciliarità Torino</h1>
   </header>
   <!-- MENU DI NAVIGAZIONE -->
-  <nav class="mb-4 d-flex justify-content-center gap-2">
+<nav class="mb-4 d-flex align-items-center">
+
+  <!-- MENU CENTRALE -->
+  <div class="d-flex justify-content-center gap-2 flex-grow-1">
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this,'upload')">📂 Carica Dati</button>
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'dati')">📊 Visualizza Dati</button>
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'fatture')">🧾 Sezione Fatture</button>
     <button class="btn btn-outline-light nav-btn" onclick="setActive(this, 'ore_oss')">🕛 Conteggio ore oss</button>
-  </nav>
+  </div>
+
+  <!-- USER + LOGOUT -->
+  <div class="d-flex align-items-center gap-2 ms-auto">
+
+    <span class="badge bg-light text-dark">
+      👤 {{ request.user.username }}
+    </span>
+
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-light nav-btn">
+        🚪 Esci
+      </button>
+    </form>
+
+  </div>
+
+</nav>
 
   <main class="container-fluid px-5">
 

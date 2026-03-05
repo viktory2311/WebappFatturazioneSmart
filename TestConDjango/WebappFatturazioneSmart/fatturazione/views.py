@@ -10,7 +10,10 @@ from datetime import datetime, timedelta
 from django.shortcuts import render
 import re
 import unicodedata
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def _clean(s: str) -> str:
     s = (s or "").strip()
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
@@ -471,6 +474,7 @@ def lista_utenti(request):
 def lista_tariffe(request):
     tariffe = list(Tariffa.objects.values("tipologia","descrizionetipologia","apl","valore"))
     return JsonResponse(tariffe, safe=False)
+@login_required
 def home(request):
     return render(request, 'index.html')    
 def calcola_periodo_documento(periodo):

@@ -7,6 +7,14 @@ SECRET_KEY = 'django-insecure-prpu#5c7izpp)cv#*jk9+)+$o#bwqy_pab5a88aqjj=!0i$(!g
 
 DEBUG = True
 
+LOGIN_URL = "/"
+LOGIN_REDIRECT_URL = "/home/"
+LOGOUT_REDIRECT_URL = "/"
+
+# se l’utente chiude il browser, al riaprirlo deve riloggare
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
