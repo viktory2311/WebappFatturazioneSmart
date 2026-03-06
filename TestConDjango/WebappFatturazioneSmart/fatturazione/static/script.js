@@ -1898,7 +1898,7 @@ let text = cell.innerText.trim().replace(',', '.');
 function resetData() {
   if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
     const csrftoken = getCookie("csrftoken");
-    console.log("CSRF token:", csrftoken);
+    //console.log("CSRF token:", csrftoken);
     fetch("/reset/", { method: "POST", headers: {"Content-Type": "application/json","X-CSRFToken": csrftoken} })
     .then(response => response.json())
     .then(data => {
