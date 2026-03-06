@@ -61,27 +61,12 @@
                     <span class="error-message" id="passwordError"></span>
                 </div>
 
-                <div class="form-options">
-                    <div class="remember-wrapper">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember" class="checkbox-label">
-                            <div class="neu-checkbox">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                            </div>
-                            Remember me
-                        </label>
-                    </div>
-                    <a href="#" class="forgot-link">Forgot password?</a>
-                </div>
-
                 <button type="submit" class="neu-button login-btn">
-                    <span class="btn-text">Sign In</span>
-                    <div class="btn-loader">
-                        <div class="neu-spinner"></div>
-                    </div>
-                </button>
+                        <span class="btn-text">Accedi</span>
+                        <div class="btn-loader">
+                            <div class="neu-spinner"></div>
+                        </div>
+                    </button>
                 {% if request.method == "POST" and form.errors %}
                 <div class="alert alert-danger">
                     ❌ Username o password non corretti
