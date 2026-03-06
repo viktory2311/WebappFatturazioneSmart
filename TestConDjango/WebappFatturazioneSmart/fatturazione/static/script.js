@@ -1896,7 +1896,7 @@ let text = cell.innerText.trim().replace(',', '.');
 
 function resetData() {
   if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
-    fetch("reset/", { method: "POST", headers: {"Content-Type": "application/json"} })
+    fetch("/reset/", { method: "POST", headers: {"Content-Type": "application/json"} })
     .then(response => response.json())
     .then(data => {
       if(data.Status === "ok"){
@@ -1917,7 +1917,7 @@ function resetData() {
 }
 function resetTariffe() {
   if (confirm("Sei sicuro di voler cancellare tutte le tariffe?")) {
-    fetch("resetTariffe/", { method: "POST", headers: {"Content-Type": "application/json"} })
+    fetch("/resetTariffe/", { method: "POST", headers: {"Content-Type": "application/json"} })
     .then(response => response.json())
     .then(data => {
       if(data.Status === "ok"){
