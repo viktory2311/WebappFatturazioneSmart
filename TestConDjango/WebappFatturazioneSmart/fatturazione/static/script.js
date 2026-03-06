@@ -300,10 +300,10 @@ async function processData(data, source) {
       if (!doubleCodiceFiscaleCheck(ossData,source)) {
         return; // ⛔ BLOCCA TUTTO
       }
-      
+      const csrftoken = getCookie("csrftoken");
       const res = await fetch("/salva/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json","X-CSRFToken": csrftoken },
         body: JSON.stringify(ossData)
       });
       const savedData = await res.json();
@@ -413,11 +413,11 @@ async function processData(data, source) {
       }
 
       console.log("📤 Invio al server solo tipologia e apl:", minimalData);
-      
+      const csrftoken = getCookie("csrftoken");
       // Salva i dati e poi carica utenti aggiornati
       await fetch("/salva/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json","X-CSRFToken": csrftoken },
         body: JSON.stringify(minimalData)
       });
 
@@ -519,11 +519,11 @@ async function processData(data, source) {
       }
 
       //console.log("📤 Invio al server solo tipologia e apl:", minimalData.slice(0, 5));
-      
+      const csrftoken = getCookie("csrftoken");
       // Salva i dati e poi carica utenti aggiornati
       await fetch("/salva/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json","X-CSRFToken": csrftoken },
         body: JSON.stringify(minimalData)
       });
 
@@ -589,7 +589,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || row["Distretto"] || row["DISTRETTO"] || "Non specificato",
+        distretto: row["CIRCOSCRIZIONE"] || row["Codice circoscrizione"] || row["CODICE CIRCOSCRIZIONE"] || row["Distretto"] || row["DISTRETTO"] || "Non specificato",
         oretotmese: row["Ore_Inbuono"] || "",
         buonoservizio: row["Ore_Lav_Mese"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "",
@@ -605,7 +605,7 @@ async function processData(data, source) {
         Fonte: source,
         apl: deriveAPL(source),
         tipologia: "AF",
-        distretto: row["CIRCOSCRIZIONE"] || row["circoscrizione"] || row["Circoscrizione"] || row["Codice circoscrizione"] || "Non specificato",
+        distretto: row["CIRCOSCRIZIONE"] || row["circoscrizione"] || row["Circoscrizione"] || row["Codice circoscrizione"]  || row["CODICE CIRCOSCRIZIONE"] || "Non specificato",
         oretotmese: row["Ore_Inbuono"] || 0,
         buonoservizio: row["Ore_Lav_Mese"] || 0,
         "Codice Fiscale Cliente": row["Codice Fiscale"] || "", 
@@ -622,10 +622,11 @@ async function processData(data, source) {
        if (!doubleCodiceFiscaleCheck(dataWithSource, source)) {
         return; // ⛔ BLOCCA TUTTO
       }
+      const csrftoken = getCookie("csrftoken");
       // Salva i dati e poi carica utenti aggiornati
       await fetch("/salva/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json","X-CSRFToken": csrftoken },
         body: JSON.stringify(minimalData)
       });
 
@@ -1857,11 +1858,11 @@ function salvaTariffe() {
       });
     }
   });
-
+  const csrftoken = getCookie("csrftoken");
   fetch("/tariffe/salva/", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json","X-CSRFToken": csrftoken
     },
     body: JSON.stringify({ dati })
   })
@@ -1896,7 +1897,9 @@ let text = cell.innerText.trim().replace(',', '.');
 
 function resetData() {
   if (confirm("Sei sicuro di voler cancellare tutti i dati?")) {
-    fetch("/reset/", { method: "POST", headers: {"Content-Type": "application/json"} })
+    const csrftoken = getCookie("csrftoken");
+    console.log("CSRF token:", csrftoken);
+    fetch("/reset/", { method: "POST", headers: {"Content-Type": "application/json","X-CSRFToken": csrftoken} })
     .then(response => response.json())
     .then(data => {
       if(data.Status === "ok"){
@@ -1916,8 +1919,10 @@ function resetData() {
 }
 }
 function resetTariffe() {
-  if (confirm("Sei sicuro di voler cancellare tutte le tariffe?")) {
-    fetch("/resetTariffe/", { method: "POST", headers: {"Content-Type": "application/json"} })
+      if (confirm("Sei sicuro di voler cancellare tutte le tariffe?")) {
+    const csrftoken = getCookie("csrftoken");
+
+    fetch("/resetTariffe/", { method: "POST", headers: {"Content-Type": "application/json", "X-CSRFToken": csrftoken} })
     .then(response => response.json())
     .then(data => {
       if(data.Status === "ok"){
@@ -1934,6 +1939,22 @@ function resetTariffe() {
   })
 }
 }
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 
 // SERVER A SALVARE I DATI IN LOCALE
 function saveData() {

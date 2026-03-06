@@ -13,7 +13,7 @@ import unicodedata
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-@login_required
+
 def _clean(s: str) -> str:
     s = (s or "").strip()
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
@@ -60,7 +60,8 @@ def normalizza_descrizionetipologia(raw: str) -> str:
     if c in {
         "minori non disabili is",
         "minori non disabili istruttore"
-    }:
+        "istruttore",
+    }  or ("istruttore" in c):
         return "minori_non_disabili_is"
     # ---- MINORI NON DISABILI ----
     if c in {
@@ -103,7 +104,6 @@ def estrai_data_da_header(header):
         return f"{anno}-{mese}-01"  # Ritorna la data come 'YYYY-MM-DD'
     return None  # Se non è una data valida, ritorna None
 
-@csrf_exempt
 def salva_dati(request):
     try:
         if request.method != "POST":
@@ -135,6 +135,7 @@ def salva_dati(request):
             tipologia = row.get("tipologia") or row.get("TIPOLOGIA") or ""
             apl = row.get("apl") or ""
 
+            
             descr_raw = row.get("descrizionetipologia") or row.get("Descrizione Tipologia") or ""
             descr_canon = normalizza_descrizionetipologia(descr_raw)
 
@@ -369,9 +370,8 @@ def salva_dati(request):
             logger.exception("Errore durante il salvataggio")
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-@csrf_exempt
+
 @require_POST
-@csrf_exempt
 def salva_tariffe(request):
     try:
         payload = json.loads(request.body)
@@ -449,7 +449,6 @@ def get_tariffa(prestazione, descrizionetipologia=None, apl=None):
 
 
 
-@csrf_exempt
 @require_POST
 def reset_utenti(request):
     try:
@@ -458,7 +457,6 @@ def reset_utenti(request):
     except Exception as e:
         return JsonResponse({"Status": "error", "message": str(e)}, status=500)
     
-@csrf_exempt
 @require_POST
 def reset_tariffe(request):
     try:
