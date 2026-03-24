@@ -278,6 +278,7 @@ let allData = [];
 let ossData = [];
 let visualizedData =[];
 let dati_ore_oss = [];
+let mesiOreOss = [];
 // Funzione che processa i dati a seconda della fonte
 async function processData(data, source) {
   console.log("😁😁 Valore di Source: ",source);
@@ -684,43 +685,236 @@ async function processData(data, source) {
         showPage('dati');
       } 
     }else if (source === "ore_oss") {
+      
+      // prendo tutti gli header presenti nel file
+      const tutteLeChiavi = data.length > 0 ? Object.keys(data[0]) : [];
 
-    dati_ore_oss = data.map(row => ({
-      ORE_TOTALI: row["Ore"] || ""
-    }));
+      // tengo solo quelli che sono mesi
+      mesiOreOss = tutteLeChiavi.filter(col => isColonnaMese(col));
 
-    console.log("✅ ore_oss processato:", dati_ore_oss.slice(0, 2));
+      dati_ore_oss = data.map(row => {
+        let nuovaRiga = {
+          DESCRIZIONE: row["Descrizione"] || row["descrizione"] || "",
+          INDIRIZZO: row["Indirizzo Cliente"] || row["indirizzo cliente"] || "",
+          ORE_TOTALI: row["Ore"] || row["ore"] || row["note cliente"] || row["Note Cliente"] || 0,
+        };
 
-    const btn = document.getElementById("btnStampa-ore_oss");
-    if (btn) btn.disabled = dati_ore_oss.length === 0;
+        // aggiungo dinamicamente le colonne mese trovate
+        mesiOreOss.forEach(mese => {
+          nuovaRiga[mese] = row[mese] || 0;
+        });
 
-    return; // importantissimo: evita di far proseguire logiche di altri source
+        return nuovaRiga;
+      });
+
+      console.log("✅ mesi trovati:", mesiOreOss);
+      console.log("✅ ore_oss processato:", dati_ore_oss.slice(0, 2));
+
+      const btn = document.getElementById("btnStampa-ore_oss");
+      if (btn) btn.disabled = dati_ore_oss.length === 0;
+
+      return;
+
   }
 
   } catch (err) {
     console.error("❌ Errore nel caricamento/salvataggio:", err);
   }
 }
+function isColonnaMese(nomeColonna) {
+  if (!nomeColonna) return false;
 
-function exportOreOssExcel() {
+  const testo = nomeColonna.toString().trim().toLowerCase();
+
+  return /^(gen|gennaio|feb|febbraio|mar|marzo|apr|aprile|mag|maggio|giu|giugno|lug|luglio|ago|agosto|set|settembre|ott|ottobre|nov|novembre|dic|dicembre)\s+\d{4}$/.test(testo);
+}
+function parseMeseAnno(nomeColonna) {
+  if (!nomeColonna) return null;
+
+  const mesi = {
+    gen: "GENNAIO",
+    gennaio: "GENNAIO",
+    feb: "FEBBRAIO",
+    febbraio: "FEBBRAIO",
+    mar: "MARZO",
+    marzo: "MARZO",
+    apr: "APRILE",
+    aprile: "APRILE",
+    mag: "MAGGIO",
+    maggio: "MAGGIO",
+    giu: "GIUGNO",
+    giugno: "GIUGNO",
+    lug: "LUGLIO",
+    luglio: "LUGLIO",
+    ago: "AGOSTO",
+    agosto: "AGOSTO",
+    set: "SETTEMBRE",
+    settembre: "SETTEMBRE",
+    ott: "OTTOBRE",
+    ottobre: "OTTOBRE",
+    nov: "NOVEMBRE",
+    novembre: "NOVEMBRE",
+    dic: "DICEMBRE",
+    dicembre: "DICEMBRE"
+  };
+
+  const testo = nomeColonna.toString().trim().toLowerCase();
+
+  // accetta formati tipo "gen 2026", "gennaio 2026"
+  const match = testo.match(/^([a-z]+)\s+(\d{4})$/);
+
+  if (!match) return null;
+
+  const meseRaw = match[1];
+  const anno = parseInt(match[2], 10);
+
+  if (!mesi[meseRaw]) return null;
+
+  return {
+    mese_raw: meseRaw,
+    mese: mesi[meseRaw],
+    anno: anno
+  };
+}
+
+async function exportOreOssExcel() {
   if (!dati_ore_oss || dati_ore_oss.length === 0) {
     alert("Prima carica un file ore_oss");
     return;
   }
 
+  function toNumber(valore) {
+    if (valore == null || valore === "") return 0;
+
+    let testo = valore.toString().trim().replace(",", ".");
+    let match = testo.match(/-?\d+(\.\d+)?/);
+    let numero = match ? parseFloat(match[0]) : 0;
+
+    return Math.round(numero * 100) / 100;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("ore_oss");
+
+  // 👉 HEADER DINAMICO
+  const headers = [
+    "DESCRIZIONE",
+    "INDIRIZZO",
+    "ORE_TOTALI",
+    ...mesiOreOss,
+    "DIFFERENZA",
+    "STATO"
+  ];
+
+  worksheet.addRow(headers);
+
+  // 👉 DATI
   dati_ore_oss.forEach((row) => {
-  let valore = (row["ORE_TOTALI"] ?? "").toString();
-  valore = valore.replace(",", ".");
-  numero = parseFloat(valore.match(/\d+(\.\d+)?/)?.[0]);
-  row["ORE_TOTALI"] = numero || 0;
+    const oreTotali = toNumber(row["ORE_TOTALI"]);
+
+    let sommaMesi = 0;
+    let numeroMesiValidi = 0;
+    const valoriMesi = mesiOreOss.map((mese) => {
+      
+      const valore = toNumber(row[mese]);
+      sommaMesi += valore;
+      numeroMesiValidi += 1;
+      return valore;
+    });
+
+    const differenza = Math.round(((oreTotali * numeroMesiValidi) - sommaMesi) * 100) / 100;
+
+    let stato = "IN PARI";
+    if (differenza > 0) stato = "SOTTO ORE";
+    else if (differenza < 0) stato = "SOPRA ORE";
+
+    worksheet.addRow([
+      row["DESCRIZIONE"] || "",
+      row["INDIRIZZO"] || "",
+      oreTotali,
+      ...valoriMesi,
+      differenza,
+      stato
+    ]);
   });
-  
 
-  const ws = XLSX.utils.json_to_sheet(dati_ore_oss);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "ore_oss");
+  // 🎨 STILE HEADER (quello che volevi replicare)
+  const headerRow = worksheet.getRow(1);
 
-  XLSX.writeFile(wb, "ore_oss.xlsx");
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FAE6D7" }
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: "000000" },
+      size: 12
+    };
+    cell.alignment = {
+      horizontal: "center",
+      vertical: "middle"
+    };
+  });
+
+  // 📏 LARGHEZZA COLONNE
+  worksheet.columns = [
+    { width: 50 },
+    { width: 70 },
+    { width: 12 },
+    ...mesiOreOss.map(() => ({ width: 12 })),
+    { width: 15 },
+    { width: 15 }
+  ];
+
+  // 🔍 FILTRO
+  worksheet.autoFilter = {
+    from: "A1",
+    to: {
+      row: 1,
+      column: headers.length
+    }
+  };
+
+  // 🎯 BONUS: colora stato
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+
+    const statoCell = row.getCell(headers.length);
+
+    if (statoCell.value === "SOTTO ORE") {
+      statoCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "F4CCCC" }
+      };
+    } else if (statoCell.value === "SOPRA ORE") {
+      statoCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "CFE2F3" }
+      };
+    } else {
+      statoCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9EAD3" }
+      };
+    }
+
+    statoCell.font = { bold: true };
+    statoCell.alignment = { horizontal: "center" };
+  });
+
+  // 💾 EXPORT (il tuo codice)
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `ore_oss.xlsx`;
+  link.click();
 }
 
 //Funzione per gestire APL Source
