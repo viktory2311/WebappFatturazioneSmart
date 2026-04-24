@@ -16,6 +16,16 @@ function setActive(button, page) {
     showPage(page);
 }
 
+function selezionaBottone(id) {
+  console.log("cliccato:", id);
+
+  document.querySelectorAll('.btn-tariffa').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  document.getElementById(id).classList.add('active');
+}
+
 
 /* GESTIONE CARICAMENTO DATI INIZIALI */
 window.onload = () => { 
@@ -1606,9 +1616,9 @@ async function exportExcel() {
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, row.descrizionetipologia, data_periodo, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             //console.log("Data Row: ", visualizedData);
             break;
-            /*case 'minori_disabili_gravi':
+          case 'minori_disabili_gravi':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
-            break;
+            break;/*
           case 'minori_non_disabili':
             dataRow = [row.descrizione, row.dataNascita, row.codiceFiscale, print_distretto, tipoUtenza, meseCompleto, tipologiaValue, row.buonoservizio, row.tariffa, row.totaleFormattato, totaleFatturato, row.apl];
             break;

@@ -38,7 +38,7 @@ body {
     color: #00c853 !important;
     font-weight: bold;
 }
-
+/*--- BOTTONE RESET DEI DATI ---*/
 #resetbtn{
   background-color: #c40000 !important; /* smeraldo */
         color: #fff !important;
@@ -47,6 +47,7 @@ body {
   background-color: #ffe5e5 !important; /* smeraldo */
         color: #c40000 !important;
 }
+/*--- FINE ---*/
 
 /*ANIMAZIONE TRA PAGINE*/
 .page {
@@ -181,7 +182,34 @@ main.flex-column {
   color: rgb(255, 255, 255);
 }
 .btn-info.clicked {
-  background-color: #00c010; /* Blu scuro */
+  background-color: #00c010; /* verde chiaro */
   color: white;
 }
 /*--- FINE ---*/
+
+/*--- BOTTONI PER LA SELEZIONE TARIFFA ---*/
+.btn-tariffa:hover{
+  background-color: #cfbb00 !important;
+  color: white !important;
+}
+.btn-tariffa {
+  color: #ffffff;
+  background-color: rgb(206, 206, 206);
+}
+
+.btn-tariffa.active {
+  background-color: #04c55b !important;
+  color: white !important;
+}
+/*--- FINE ---*/
+
+/* RESET TARIFFE*/
+.btn-reset{
+  background: rgb(163, 2, 2);
+  color: white;
+}
+.btn-reset:hover{
+  background: rgb(223, 0, 0);
+  color: white;
+}
+/*--- FINE---*/
